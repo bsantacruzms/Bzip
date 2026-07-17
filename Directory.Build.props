@@ -1,0 +1,13 @@
+<Project>
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <Version>0.1.0</Version>
+    <Authors>Brian Santacruz</Authors>
+    <Company>briansantacruz.com</Company>
+    <Product>BoltZip</Product>
+    <Copyright>Created by Brian Santacruz — briansantacruz.com</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+  </PropertyGroup>
+</Project>
