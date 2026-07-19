@@ -1,21 +1,23 @@
-﻿using System.IO;
-using System.Linq;
-using System.Windows;
+using System.IO;
+using Avalonia;
+using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Markup.Xaml;
+using BoltZip.Core.Compression;
 
 namespace BoltZip.App;
 
-/// <summary>
-/// Interaction logic for App.xaml
-/// </summary>
 public partial class App : Application
 {
-    protected override void OnStartup(StartupEventArgs e)
-    {
-        base.OnStartup(e);
+    public override void Initialize() => AvaloniaXamlLoader.Load(this);
 
-        var startup = StartupAction.Parse(e.Args);
-        var window = new MainWindow(startup);
-        window.Show();
+    public override void OnFrameworkInitializationCompleted()
+    {
+        if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            desktop.MainWindow = new MainWindow(StartupAction.Parse(desktop.Args ?? Array.Empty<string>()));
+        }
+
+        base.OnFrameworkInitializationCompleted();
     }
 }
 
@@ -35,13 +37,11 @@ public sealed record StartupAction(StartupMode Mode, string? Path)
             }
         }
 
-        // Bare path argument (e.g. a file dropped on the exe): infer intent from its extension.
         var pathArg = args.FirstOrDefault(a => !a.StartsWith('-'));
         if (pathArg is not null)
         {
             var mode = File.Exists(pathArg) &&
-                       BoltZip.Core.Compression.FormatInfo.DetectFromPath(pathArg).Format
-                           is not BoltZip.Core.Compression.ArchiveFormat.Unknown
+                       FormatInfo.DetectFromPath(pathArg).Format is not ArchiveFormat.Unknown
                 ? StartupMode.Extract
                 : StartupMode.Compress;
             return new StartupAction(mode, pathArg);
@@ -56,4 +56,3 @@ public enum StartupMode
     Compress,
     Extract,
 }
-

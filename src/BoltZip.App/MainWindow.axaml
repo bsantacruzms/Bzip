@@ -1,0 +1,165 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="BoltZip.App.MainWindow"
+        Title="BoltZip" Width="980" Height="770" MinWidth="840" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        TransparencyLevelHint="Mica"
+        Background="Transparent">
+    <Border Background="#F21B1B22">
+        <Grid Margin="22" RowDefinitions="Auto,*,Auto,Auto">
+
+            <!-- Header -->
+            <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Margin="2,0,2,16">
+                <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+                    <TextBlock Text="&#x26A1;" FontSize="26" Foreground="{DynamicResource BoltAccentBrush}" VerticalAlignment="Center" />
+                    <TextBlock Text="BoltZip" FontSize="26" FontWeight="Bold" VerticalAlignment="Center" />
+                    <TextBlock Text="modern, hardware-optimized archiver" Foreground="{DynamicResource BoltSubtleBrush}"
+                               VerticalAlignment="Bottom" Margin="6,0,0,5" />
+                </StackPanel>
+                <TextBlock x:Name="HardwareText" Grid.Column="1" MaxWidth="380" TextWrapping="Wrap" TextAlignment="Right"
+                           VerticalAlignment="Center" Foreground="{DynamicResource BoltSubtleBrush}" Text="Detecting hardware&#x2026;" />
+            </Grid>
+
+            <!-- Tabs -->
+            <TabControl x:Name="Tabs" Grid.Row="1">
+                <TabItem Header="Compress">
+                    <ScrollViewer>
+                        <StackPanel Spacing="14" Margin="2,12,2,2">
+                            <Border Classes="card">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="h2" Text="Files &amp; folders" />
+                                    <ListBox x:Name="InputList" Height="150" DragDrop.AllowDrop="True" />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Add files&#x2026;" Click="OnAddFiles" />
+                                        <Button Content="Add folder&#x2026;" Click="OnAddFolder" />
+                                        <Button Content="Remove" Click="OnRemoveInput" />
+                                        <Button Content="Clear" Click="OnClearInputs" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="card">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="h2" Text="Format &amp; options" />
+                                    <TextBlock Classes="label" Text="Output format" />
+                                    <WrapPanel x:Name="FormatPanel">
+                                        <RadioButton GroupName="Format" Content=".bz (encrypted)" Tag=".bz" IsChecked="True" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Format" Content=".zip" Tag=".zip" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Format" Content=".zst" Tag=".zst" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Format" Content=".tar" Tag=".tar" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Format" Content=".gz" Tag=".gz" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Format" Content=".bz2" Tag=".bz2" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Format" Content=".br" Tag=".br" Margin="0,0,8,8" />
+                                    </WrapPanel>
+                                    <TextBlock Classes="label" Text="Optimization goal" Margin="0,6,0,0" />
+                                    <WrapPanel x:Name="GoalPanel">
+                                        <RadioButton GroupName="Goal" Content="Max speed" Tag="MaxSpeed" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Goal" Content="Balanced" Tag="Balanced" IsChecked="True" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="Goal" Content="Max ratio" Tag="MaxRatio" Margin="0,0,8,8" />
+                                    </WrapPanel>
+                                    <Grid ColumnDefinitions="90,*" Margin="0,6,0,0">
+                                        <TextBlock Text="Password" VerticalAlignment="Center" />
+                                        <TextBox x:Name="PasswordBox" Grid.Column="1" PasswordChar="&#x25CF;" Watermark="Optional &#x2014; .bz only" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="90,*,Auto">
+                                        <TextBlock Text="Output" VerticalAlignment="Center" />
+                                        <TextBox x:Name="OutputPathBox" Grid.Column="1" Watermark="Destination archive path" />
+                                        <Button Grid.Column="2" Content="Browse&#x2026;" Margin="8,0,0,0" Click="OnBrowseOutput" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Classes="card">
+                                <StackPanel Spacing="8">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Classes="h2" Text="Optimization plan" VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Content="Preview" Click="OnPreviewPlan" />
+                                    </Grid>
+                                    <TextBlock x:Name="PlanText" TextWrapping="Wrap" Foreground="{DynamicResource BoltSubtleBrush}"
+                                               Text="BoltZip auto-tunes threads, window size, buffers and codec to your machine. Click Preview." />
+                                </StackPanel>
+                            </Border>
+
+                            <Button x:Name="CompressButton" Classes="accent" Content="Compress" HorizontalAlignment="Left" Click="OnCompress" />
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Extract">
+                    <ScrollViewer>
+                        <StackPanel Spacing="14" Margin="2,12,2,2">
+                            <Border Classes="card" x:Name="ExtractDropZone" DragDrop.AllowDrop="True">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="h2" Text="Archive" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox x:Name="ArchivePathBox" Watermark="Drop an archive here or browse" />
+                                        <Button Grid.Column="1" Content="Browse&#x2026;" Margin="8,0,0,0" Click="OnBrowseArchive" />
+                                    </Grid>
+                                    <TextBlock Classes="label" Text="Extract to" Margin="0,6,0,0" />
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBox x:Name="ExtractOutputBox" Watermark="Output folder" />
+                                        <Button Grid.Column="1" Content="Browse&#x2026;" Margin="8,0,0,0" Click="OnBrowseExtractDir" />
+                                    </Grid>
+                                    <Grid ColumnDefinitions="90,*,Auto" Margin="0,6,0,0">
+                                        <TextBlock Text="Password" VerticalAlignment="Center" />
+                                        <TextBox x:Name="ExtractPasswordBox" Grid.Column="1" PasswordChar="&#x25CF;" Watermark="If encrypted" />
+                                        <CheckBox x:Name="OverwriteCheck" Grid.Column="2" Content="Overwrite" Margin="12,0,0,0" />
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+                                        <Button Content="List contents" Click="OnListArchive" />
+                                        <Button x:Name="ExtractButton" Classes="accent" Content="Extract" Click="OnExtract" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Classes="h2" Text="Contents" />
+                                    <ListBox x:Name="EntryList" Height="240" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Settings">
+                    <ScrollViewer>
+                        <StackPanel Spacing="14" Margin="2,12,2,2">
+                            <Border Classes="card">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="h2" Text="Windows integration" />
+                                    <TextBlock Classes="label" TextWrapping="Wrap"
+                                               Text="Add BoltZip to the right-click menu in Explorer. On Windows 11 it appears under &#x201C;Show more options&#x201D;." />
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button x:Name="InstallShellButton" Content="Add right-click menu" Click="OnInstallShell" />
+                                        <Button x:Name="RemoveShellButton" Content="Remove" Click="OnRemoveShell" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card">
+                                <StackPanel Spacing="6">
+                                    <TextBlock Classes="h2" Text="About" />
+                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 0.1.0 &#x2014; modern, hardware-optimized archiver." />
+                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="Native .bz format: Zstandard + XChaCha20-Poly1305 + Argon2id." />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+
+            <!-- Status -->
+            <Grid Grid.Row="2" ColumnDefinitions="*,Auto" Margin="2,14,2,0">
+                <ProgressBar x:Name="Progress" Minimum="0" Maximum="100" VerticalAlignment="Center" />
+                <TextBlock x:Name="StatusText" Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center"
+                           Foreground="{DynamicResource BoltSubtleBrush}" Text="Ready" />
+            </Grid>
+
+            <!-- Footer -->
+            <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
+                <TextBlock Text="Created by Brian Santacruz &#x2014; " Foreground="{DynamicResource BoltSubtleBrush}" FontSize="12" />
+                <TextBlock x:Name="WebsiteLink" Text="briansantacruz.com" Foreground="{DynamicResource BoltAccentBrush}"
+                           FontSize="12" TextDecorations="Underline" PointerPressed="OnOpenWebsite" />
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

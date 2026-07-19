@@ -1,0 +1,42 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="BoltZip.App.App"
+             RequestedThemeVariant="Dark">
+
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Amber accent to match the BoltZip identity -->
+            <Color x:Key="SystemAccentColor">#FFB020</Color>
+            <Color x:Key="SystemAccentColorDark1">#F5A200</Color>
+            <Color x:Key="SystemAccentColorDark2">#D98E00</Color>
+            <Color x:Key="SystemAccentColorDark3">#B87700</Color>
+            <Color x:Key="SystemAccentColorLight1">#FFC044</Color>
+            <Color x:Key="SystemAccentColorLight2">#FFD37A</Color>
+            <Color x:Key="SystemAccentColorLight3">#FFE3AC</Color>
+
+            <SolidColorBrush x:Key="BoltAccentBrush" Color="#FFB020" />
+            <SolidColorBrush x:Key="BoltSubtleBrush" Color="#9AA0A6" />
+        </ResourceDictionary>
+    </Application.Resources>
+
+    <Application.Styles>
+        <FluentTheme />
+
+        <Style Selector="Border.card">
+            <Setter Property="Background" Value="#26262F" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="18" />
+            <Setter Property="BorderBrush" Value="#2E2E3A" />
+            <Setter Property="BorderThickness" Value="1" />
+        </Style>
+
+        <Style Selector="TextBlock.h2">
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style Selector="TextBlock.label">
+            <Setter Property="Foreground" Value="#B0B4BA" />
+        </Style>
+    </Application.Styles>
+</Application>

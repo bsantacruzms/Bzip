@@ -1,26 +1,61 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Media;
-using System.Windows.Navigation;
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Platform.Storage;
+using Avalonia.Threading;
 using BoltZip.Core.Compression;
 using BoltZip.Core.Hardware;
 using BoltZip.Core.Infrastructure;
-using Microsoft.Win32;
 
 namespace BoltZip.App;
 
 public partial class MainWindow : Window
 {
+    private static readonly IBrush SuccessBrush = new SolidColorBrush(Color.Parse("#4CAF50"));
+    private static readonly IBrush ErrorBrush = new SolidColorBrush(Color.Parse("#E5534B"));
+    private static readonly IBrush SubtleBrush = new SolidColorBrush(Color.Parse("#9AA0A6"));
+
     private readonly ArchiveService _service = new();
+    private readonly ObservableCollection<string> _inputs = new();
+    private readonly ObservableCollection<string> _entries = new();
     private HardwareProfile? _hardware;
     private string _lastSuggestedOutput = string.Empty;
     private bool _busy;
 
+    public MainWindow() : this(new StartupAction(StartupMode.Compress, null))
+    {
+    }
+
     public MainWindow(StartupAction startup)
     {
         InitializeComponent();
+
+        InputList.ItemsSource = _inputs;
+        EntryList.ItemsSource = _entries;
+
+        InputList.AddHandler(DragDrop.DropEvent, OnInputDrop);
+        InputList.AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        ExtractDropZone.AddHandler(DragDrop.DropEvent, OnArchiveDrop);
+        ExtractDropZone.AddHandler(DragDrop.DragOverEvent, OnDragOver);
+
+        foreach (var radio in FormatPanel.Children.OfType<RadioButton>())
+        {
+            radio.Click += (_, _) => OnFormatChanged();
+        }
+
+        foreach (var radio in GoalPanel.Children.OfType<RadioButton>())
+        {
+            radio.Click += (_, _) => OnGoalChanged();
+        }
+
+        var onWindows = OperatingSystem.IsWindows();
+        InstallShellButton.IsEnabled = onWindows;
+        RemoveShellButton.IsEnabled = onWindows;
+
         ApplyStartup(startup);
         _ = LoadHardwareAsync();
     }
@@ -30,13 +65,13 @@ public partial class MainWindow : Window
         try
         {
             _hardware = await HardwareProbe.DetectAsync();
-            HardwareText.Text = _hardware.Summary();
         }
         catch
         {
             _hardware = HardwareProbe.DetectFast();
-            HardwareText.Text = _hardware.Summary();
         }
+
+        HardwareText.Text = _hardware.Summary();
     }
 
     private void ApplyStartup(StartupAction startup)
@@ -48,85 +83,120 @@ public partial class MainWindow : Window
 
         if (startup.Mode == StartupMode.Extract)
         {
-            ExtractTab.IsChecked = true;
+            Tabs.SelectedIndex = 1;
             ArchivePathBox.Text = startup.Path;
             ExtractOutputBox.Text = SuggestExtractDirectory(startup.Path);
         }
         else
         {
-            CompressTab.IsChecked = true;
+            Tabs.SelectedIndex = 0;
             AddInput(startup.Path);
         }
     }
 
-    // ---- Navigation ----
+    // ---- Drag & drop ----
 
-    private void OnTabChanged(object sender, RoutedEventArgs e)
+    private void OnDragOver(object? sender, DragEventArgs e)
     {
-        if (CompressPanel is null || ExtractPanel is null)
+        e.DragEffects = e.Data.Contains(DataFormats.Files) ? DragDropEffects.Copy : DragDropEffects.None;
+    }
+
+    private void OnInputDrop(object? sender, DragEventArgs e)
+    {
+        foreach (var path in ExtractPaths(e))
+        {
+            AddInput(path);
+        }
+    }
+
+    private void OnArchiveDrop(object? sender, DragEventArgs e)
+    {
+        var first = ExtractPaths(e).FirstOrDefault();
+        if (first is null)
         {
             return;
         }
 
-        var compress = CompressTab.IsChecked == true;
-        CompressPanel.Visibility = compress ? Visibility.Visible : Visibility.Collapsed;
-        ExtractPanel.Visibility = compress ? Visibility.Collapsed : Visibility.Visible;
+        ArchivePathBox.Text = first;
+        if (string.IsNullOrWhiteSpace(ExtractOutputBox.Text))
+        {
+            ExtractOutputBox.Text = SuggestExtractDirectory(first);
+        }
     }
 
-    // ---- Compress inputs ----
-
-    private void OnAddFiles(object sender, RoutedEventArgs e)
+    private static IEnumerable<string> ExtractPaths(DragEventArgs e)
     {
-        var dialog = new OpenFileDialog { Title = "Add files", Multiselect = true };
-        if (dialog.ShowDialog() == true)
+        var files = e.Data.GetFiles();
+        if (files is null)
         {
-            foreach (var file in dialog.FileNames)
+            yield break;
+        }
+
+        foreach (var item in files)
+        {
+            var path = item.TryGetLocalPath();
+            if (!string.IsNullOrEmpty(path))
             {
-                AddInput(file);
+                yield return path;
             }
         }
     }
 
-    private void OnAddFolder(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OpenFolderDialog { Title = "Add a folder" };
-        if (dialog.ShowDialog() == true)
-        {
-            AddInput(dialog.FolderName);
-        }
-    }
+    // ---- Compress inputs ----
 
-    private void OnRemoveInput(object sender, RoutedEventArgs e)
+    private async void OnAddFiles(object? sender, RoutedEventArgs e)
     {
-        if (InputList.SelectedItem is string selected)
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            InputList.Items.Remove(selected);
-            UpdateSuggestedOutput();
-        }
-    }
+            Title = "Add files",
+            AllowMultiple = true,
+        });
 
-    private void OnClearInputs(object sender, RoutedEventArgs e)
-    {
-        InputList.Items.Clear();
-        UpdateSuggestedOutput();
-    }
-
-    private void OnInputDrop(object sender, DragEventArgs e)
-    {
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] paths)
+        foreach (var file in files)
         {
-            foreach (var path in paths)
+            var path = file.TryGetLocalPath();
+            if (!string.IsNullOrEmpty(path))
             {
                 AddInput(path);
             }
         }
     }
 
+    private async void OnAddFolder(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Add a folder",
+            AllowMultiple = false,
+        });
+
+        var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
+        if (!string.IsNullOrEmpty(path))
+        {
+            AddInput(path);
+        }
+    }
+
+    private void OnRemoveInput(object? sender, RoutedEventArgs e)
+    {
+        if (InputList.SelectedItem is string selected)
+        {
+            _inputs.Remove(selected);
+            UpdateSuggestedOutput();
+        }
+    }
+
+    private void OnClearInputs(object? sender, RoutedEventArgs e)
+    {
+        _inputs.Clear();
+        UpdateSuggestedOutput();
+    }
+
     private void AddInput(string path)
     {
-        if (!InputList.Items.Contains(path))
+        if (!_inputs.Contains(path))
         {
-            InputList.Items.Add(path);
+            _inputs.Add(path);
         }
 
         UpdateSuggestedOutput();
@@ -134,50 +204,46 @@ public partial class MainWindow : Window
 
     // ---- Options ----
 
-    private void OnFormatChanged(object sender, RoutedEventArgs e)
+    private void OnFormatChanged()
     {
-        if (PasswordBox is null)
-        {
-            return;
-        }
-
         var isBz = SelectedExtension() == ".bz";
         PasswordBox.IsEnabled = isBz;
         if (!isBz)
         {
-            PasswordBox.Clear();
+            PasswordBox.Text = string.Empty;
         }
 
         UpdateSuggestedOutput();
     }
 
-    private void OnGoalChanged(object sender, RoutedEventArgs e)
+    private void OnGoalChanged()
     {
-        if (PlanText is not null)
-        {
-            PlanText.Text = "Goal changed. Click Preview to see the new plan.";
-        }
+        PlanText.Text = "Goal changed. Click Preview to see the new plan.";
     }
 
-    private void OnBrowseOutput(object sender, RoutedEventArgs e)
+    private async void OnBrowseOutput(object? sender, RoutedEventArgs e)
     {
         var extension = SelectedExtension();
-        var dialog = new SaveFileDialog
+        var suggested = string.IsNullOrWhiteSpace(OutputPathBox.Text)
+            ? "archive" + extension
+            : Path.GetFileName(OutputPathBox.Text);
+
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save archive as",
-            FileName = Path.GetFileName(OutputPathBox.Text),
-            DefaultExt = extension,
-            Filter = $"BoltZip archive (*{extension})|*{extension}|All files (*.*)|*.*",
-        };
+            SuggestedFileName = suggested,
+            DefaultExtension = extension.TrimStart('.'),
+        });
 
-        if (dialog.ShowDialog() == true)
+        var path = file?.TryGetLocalPath();
+        if (!string.IsNullOrEmpty(path))
         {
-            OutputPathBox.Text = dialog.FileName;
-            _lastSuggestedOutput = dialog.FileName;
+            OutputPathBox.Text = path;
+            _lastSuggestedOutput = path;
         }
     }
 
-    private async void OnPreviewPlan(object sender, RoutedEventArgs e)
+    private async void OnPreviewPlan(object? sender, RoutedEventArgs e)
     {
         try
         {
@@ -193,7 +259,7 @@ public partial class MainWindow : Window
 
     // ---- Compress ----
 
-    private async void OnCompress(object sender, RoutedEventArgs e)
+    private async void OnCompress(object? sender, RoutedEventArgs e)
     {
         if (_busy)
         {
@@ -207,25 +273,23 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, ex.Message, "BoltZip", MessageBoxButton.OK, MessageBoxImage.Warning);
+            SetStatus(ex.Message, success: false);
             return;
         }
 
         SetBusy(true);
         var stopwatch = Stopwatch.StartNew();
-        var progress = CreateProgress(stopwatch);
 
         try
         {
-            var result = await _service.CreateAsync(request, progress);
+            var result = await _service.CreateAsync(request, CreateProgress(stopwatch));
             var size = new FileInfo(result.OutputPath).Length;
             SetStatus($"Created {Path.GetFileName(result.OutputPath)} ({FormatBytes(size)})", success: true);
-            ProgressBar.Value = 100;
+            Progress.Value = 100;
         }
         catch (Exception ex)
         {
             SetStatus($"Failed: {ex.Message}", success: false);
-            MessageBox.Show(this, ex.Message, "BoltZip", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -235,66 +299,60 @@ public partial class MainWindow : Window
 
     // ---- Extract ----
 
-    private void OnArchiveDrop(object sender, DragEventArgs e)
+    private async void OnBrowseArchive(object? sender, RoutedEventArgs e)
     {
-        if (e.Data.GetData(DataFormats.FileDrop) is string[] { Length: > 0 } paths)
-        {
-            ArchivePathBox.Text = paths[0];
-            if (string.IsNullOrWhiteSpace(ExtractOutputBox.Text))
-            {
-                ExtractOutputBox.Text = SuggestExtractDirectory(paths[0]);
-            }
-        }
-    }
-
-    private void OnBrowseArchive(object sender, RoutedEventArgs e)
-    {
-        var dialog = new OpenFileDialog
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open archive",
-            Filter = "Archives (*.bz;*.zip;*.7z;*.rar;*.tar;*.gz;*.bz2;*.zst;*.xz;*.br)|" +
-                     "*.bz;*.zip;*.7z;*.rar;*.tar;*.gz;*.bz2;*.zst;*.xz;*.br|All files (*.*)|*.*",
-        };
+            AllowMultiple = false,
+        });
 
-        if (dialog.ShowDialog() == true)
+        var path = files.Count > 0 ? files[0].TryGetLocalPath() : null;
+        if (!string.IsNullOrEmpty(path))
         {
-            ArchivePathBox.Text = dialog.FileName;
+            ArchivePathBox.Text = path;
             if (string.IsNullOrWhiteSpace(ExtractOutputBox.Text))
             {
-                ExtractOutputBox.Text = SuggestExtractDirectory(dialog.FileName);
+                ExtractOutputBox.Text = SuggestExtractDirectory(path);
             }
         }
     }
 
-    private void OnBrowseExtractDir(object sender, RoutedEventArgs e)
+    private async void OnBrowseExtractDir(object? sender, RoutedEventArgs e)
     {
-        var dialog = new OpenFolderDialog { Title = "Extract to" };
-        if (dialog.ShowDialog() == true)
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
         {
-            ExtractOutputBox.Text = dialog.FolderName;
+            Title = "Extract to",
+            AllowMultiple = false,
+        });
+
+        var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
+        if (!string.IsNullOrEmpty(path))
+        {
+            ExtractOutputBox.Text = path;
         }
     }
 
-    private async void OnListArchive(object sender, RoutedEventArgs e)
+    private async void OnListArchive(object? sender, RoutedEventArgs e)
     {
-        var archive = ArchivePathBox.Text;
+        var archive = ArchivePathBox.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(archive) || !File.Exists(archive))
         {
             SetStatus("Choose an archive first.", success: false);
             return;
         }
 
-        var password = ExtractPasswordBox.Password;
+        var password = ExtractPasswordBox.Text;
         try
         {
             var entries = await _service.ListAsync(archive, string.IsNullOrEmpty(password) ? null : password);
-            EntryList.Items.Clear();
+            _entries.Clear();
             foreach (var entry in entries.Where(entry => !entry.IsDirectory))
             {
-                EntryList.Items.Add($"{entry.Path}   ({FormatBytes(entry.Size)})");
+                _entries.Add($"{entry.Path}   ({FormatBytes(entry.Size)})");
             }
 
-            SetStatus($"{EntryList.Items.Count} file(s).", success: true);
+            SetStatus($"{_entries.Count} file(s).", success: true);
         }
         catch (InvalidOperationException)
         {
@@ -307,14 +365,14 @@ public partial class MainWindow : Window
         }
     }
 
-    private async void OnExtract(object sender, RoutedEventArgs e)
+    private async void OnExtract(object? sender, RoutedEventArgs e)
     {
         if (_busy)
         {
             return;
         }
 
-        var archive = ArchivePathBox.Text;
+        var archive = ArchivePathBox.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(archive) || !File.Exists(archive))
         {
             SetStatus("Choose an archive first.", success: false);
@@ -323,10 +381,10 @@ public partial class MainWindow : Window
 
         var outputDir = string.IsNullOrWhiteSpace(ExtractOutputBox.Text)
             ? SuggestExtractDirectory(archive)
-            : ExtractOutputBox.Text;
+            : ExtractOutputBox.Text!;
         ExtractOutputBox.Text = outputDir;
 
-        var password = ExtractPasswordBox.Password;
+        var password = ExtractPasswordBox.Text;
         var request = new ExtractRequest
         {
             ArchivePath = archive,
@@ -337,13 +395,12 @@ public partial class MainWindow : Window
 
         SetBusy(true);
         var stopwatch = Stopwatch.StartNew();
-        var progress = CreateProgress(stopwatch);
 
         try
         {
-            await _service.ExtractAsync(request, progress);
+            await _service.ExtractAsync(request, CreateProgress(stopwatch));
             SetStatus($"Extracted to {outputDir}", success: true);
-            ProgressBar.Value = 100;
+            Progress.Value = 100;
         }
         catch (InvalidOperationException)
         {
@@ -353,7 +410,6 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             SetStatus($"Failed: {ex.Message}", success: false);
-            MessageBox.Show(this, ex.Message, "BoltZip", MessageBoxButton.OK, MessageBoxImage.Error);
         }
         finally
         {
@@ -361,13 +417,18 @@ public partial class MainWindow : Window
         }
     }
 
-    // ---- Shell integration ----
+    // ---- Shell integration (Windows only) ----
 
-    private void OnInstallShell(object sender, RoutedEventArgs e)
+    private void OnInstallShell(object? sender, RoutedEventArgs e)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
         try
         {
-            var exe = Environment.ProcessPath ?? Process.GetCurrentProcess().MainModule?.FileName;
+            var exe = Environment.ProcessPath;
             if (exe is null)
             {
                 return;
@@ -382,8 +443,13 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnRemoveShell(object sender, RoutedEventArgs e)
+    private void OnRemoveShell(object? sender, RoutedEventArgs e)
     {
+        if (!OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
         try
         {
             ShellIntegration.Uninstall();
@@ -395,25 +461,23 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnOpenWebsite(object sender, RequestNavigateEventArgs e)
+    private void OnOpenWebsite(object? sender, PointerPressedEventArgs e)
     {
         try
         {
-            Process.Start(new ProcessStartInfo(e.Uri.AbsoluteUri) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("https://briansantacruz.com") { UseShellExecute = true });
         }
         catch
         {
-            // ignore navigation failures
+            // ignore
         }
-
-        e.Handled = true;
     }
 
     // ---- Helpers ----
 
     private CreateRequest BuildCreateRequest(bool requireInputs)
     {
-        var inputs = InputList.Items.OfType<string>().ToList();
+        var inputs = _inputs.ToList();
         if (requireInputs && inputs.Count == 0)
         {
             throw new InvalidOperationException("Add at least one file or folder to compress.");
@@ -422,14 +486,9 @@ public partial class MainWindow : Window
         var extension = SelectedExtension();
         var output = string.IsNullOrWhiteSpace(OutputPathBox.Text)
             ? SuggestOutputPath(inputs, extension)
-            : OutputPathBox.Text;
+            : OutputPathBox.Text!;
 
-        if (requireInputs && string.IsNullOrWhiteSpace(output))
-        {
-            throw new InvalidOperationException("Choose an output path.");
-        }
-
-        var password = PasswordBox.Password;
+        var password = PasswordBox.Text;
         return new CreateRequest
         {
             OutputPath = string.IsNullOrWhiteSpace(output) ? $"archive{extension}" : output,
@@ -441,34 +500,28 @@ public partial class MainWindow : Window
     }
 
     private string SelectedExtension() =>
-        FormatPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag?.ToString() ?? ".bz";
+        FormatPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag as string ?? ".bz";
 
     private OptimizationGoal SelectedGoal()
     {
-        var tag = GoalPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag?.ToString();
+        var tag = GoalPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag as string;
         return Enum.TryParse<OptimizationGoal>(tag, out var goal) ? goal : OptimizationGoal.Balanced;
     }
 
     private void UpdateSuggestedOutput()
     {
-        if (OutputPathBox is null)
+        if (_inputs.Count == 0)
         {
             return;
         }
 
-        var inputs = InputList.Items.OfType<string>().ToList();
-        if (inputs.Count == 0)
+        var current = OutputPathBox.Text ?? string.Empty;
+        if (!string.IsNullOrEmpty(current) && current != _lastSuggestedOutput)
         {
             return;
         }
 
-        // Only replace the field if the user hasn't customized it.
-        if (!string.IsNullOrEmpty(OutputPathBox.Text) && OutputPathBox.Text != _lastSuggestedOutput)
-        {
-            return;
-        }
-
-        var suggestion = SuggestOutputPath(inputs, SelectedExtension());
+        var suggestion = SuggestOutputPath(_inputs.ToList(), SelectedExtension());
         OutputPathBox.Text = suggestion;
         _lastSuggestedOutput = suggestion;
     }
@@ -497,14 +550,14 @@ public partial class MainWindow : Window
 
     private IProgress<ArchiveProgress> CreateProgress(Stopwatch stopwatch)
     {
-        return new Progress<ArchiveProgress>(p =>
+        return new Progress<ArchiveProgress>(p => Dispatcher.UIThread.Post(() =>
         {
-            ProgressBar.Value = p.Percent;
+            Progress.Value = p.Percent;
             var eta = EstimateEta(stopwatch, p);
             var entry = string.IsNullOrEmpty(p.CurrentEntry) ? string.Empty : $"  {p.CurrentEntry}";
-            StatusText.Foreground = (Brush)FindResource("SubtleBrush");
+            StatusText.Foreground = SubtleBrush;
             StatusText.Text = $"{p.Phase} {p.Percent:0}%{eta}{entry}";
-        });
+        }));
     }
 
     private static string EstimateEta(Stopwatch stopwatch, ArchiveProgress p)
@@ -527,7 +580,7 @@ public partial class MainWindow : Window
     private void SetStatus(string message, bool success)
     {
         StatusText.Text = message;
-        StatusText.Foreground = (Brush)FindResource(success ? "SuccessBrush" : "ErrorBrush");
+        StatusText.Foreground = success ? SuccessBrush : ErrorBrush;
     }
 
     private void SetBusy(bool busy)
@@ -535,10 +588,10 @@ public partial class MainWindow : Window
         _busy = busy;
         CompressButton.IsEnabled = !busy;
         ExtractButton.IsEnabled = !busy;
-        Cursor = busy ? System.Windows.Input.Cursors.Wait : System.Windows.Input.Cursors.Arrow;
+        Cursor = busy ? new Cursor(StandardCursorType.Wait) : Cursor.Default;
         if (busy)
         {
-            ProgressBar.Value = 0;
+            Progress.Value = 0;
         }
     }
 
