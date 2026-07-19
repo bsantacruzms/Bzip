@@ -3,6 +3,7 @@
         x:Class="BoltZip.App.MainWindow"
         Title="BoltZip" Width="980" Height="770" MinWidth="840" MinHeight="640"
         WindowStartupLocation="CenterScreen"
+        Icon="/Assets/boltzip.png"
         TransparencyLevelHint="Mica"
         Background="Transparent">
     <Border Background="#F21B1B22">
@@ -128,11 +129,7 @@
                                 <StackPanel Spacing="10">
                                     <TextBlock Classes="h2" Text="Windows integration" />
                                     <TextBlock Classes="label" TextWrapping="Wrap"
-                                               Text="Add BoltZip to the right-click menu in Explorer. On Windows 11 it appears under &#x201C;Show more options&#x201D;." />
-                                    <StackPanel Orientation="Horizontal" Spacing="8">
-                                        <Button x:Name="InstallShellButton" Content="Add right-click menu" Click="OnInstallShell" />
-                                        <Button x:Name="RemoveShellButton" Content="Remove" Click="OnRemoveShell" />
-                                    </StackPanel>
+                                               Text="Install BoltZip with the Windows installer (.msi) to add the &#x201C;BoltZip&#x201D; menu to your right-click menu in Explorer. The portable app never modifies your system." />
                                 </StackPanel>
                             </Border>
                             <Border Classes="card">

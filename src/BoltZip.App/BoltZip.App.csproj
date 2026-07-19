@@ -7,10 +7,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>BoltZipTool</AssemblyName>
     <RootNamespace>BoltZip.App</RootNamespace>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <ApplicationManifest Condition="'$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('win'))">app.manifest</ApplicationManifest>
+    <ApplicationIcon Condition="'$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('win'))">Assets\boltzip.ico</ApplicationIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BoltZip.Core\BoltZip.Core.csproj" />

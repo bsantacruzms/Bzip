@@ -9,7 +9,6 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using BoltZip.Core.Compression;
 using BoltZip.Core.Hardware;
-using BoltZip.Core.Infrastructure;
 
 namespace BoltZip.App;
 
@@ -51,10 +50,6 @@ public partial class MainWindow : Window
         {
             radio.Click += (_, _) => OnGoalChanged();
         }
-
-        var onWindows = OperatingSystem.IsWindows();
-        InstallShellButton.IsEnabled = onWindows;
-        RemoveShellButton.IsEnabled = onWindows;
 
         ApplyStartup(startup);
         _ = LoadHardwareAsync();
@@ -414,50 +409,6 @@ public partial class MainWindow : Window
         finally
         {
             SetBusy(false);
-        }
-    }
-
-    // ---- Shell integration (Windows only) ----
-
-    private void OnInstallShell(object? sender, RoutedEventArgs e)
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        try
-        {
-            var exe = Environment.ProcessPath;
-            if (exe is null)
-            {
-                return;
-            }
-
-            ShellIntegration.Install(exe);
-            SetStatus("Added BoltZip to the right-click menu (see \"Show more options\").", success: true);
-        }
-        catch (Exception ex)
-        {
-            SetStatus($"Could not update the menu: {ex.Message}", success: false);
-        }
-    }
-
-    private void OnRemoveShell(object? sender, RoutedEventArgs e)
-    {
-        if (!OperatingSystem.IsWindows())
-        {
-            return;
-        }
-
-        try
-        {
-            ShellIntegration.Uninstall();
-            SetStatus("Removed BoltZip from the right-click menu.", success: true);
-        }
-        catch (Exception ex)
-        {
-            SetStatus($"Could not update the menu: {ex.Message}", success: false);
         }
     }
 

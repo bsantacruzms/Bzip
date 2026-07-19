@@ -4,51 +4,65 @@ using Microsoft.Win32;
 namespace BoltZip.Core.Infrastructure;
 
 /// <summary>
-/// Registers/unregisters BoltZip verbs in the Windows right-click menu. Writes only to
-/// <c>HKCU\Software\Classes</c> so no administrator rights are required. On Windows 11 the
-/// entries appear under "Show more options" (the classic menu).
+/// Registers/unregisters a cascading "BoltZip" submenu in the Windows right-click menu
+/// (per-user, <c>HKCU\Software\Classes</c>, no admin required). Used by the CLI
+/// <c>bz install-context</c>. The MSI installer registers the equivalent machine-wide menu.
 /// </summary>
 [SupportedOSPlatform("windows")]
 public static class ShellIntegration
 {
-    private const string CompressVerb = "BoltZip.Compress";
-    private const string ExtractVerb = "BoltZip.Extract";
     private const string ClassesRoot = @"Software\Classes";
+    private const string FileMenuKey = "BoltZip.FileMenu";
+    private const string DirMenuKey = "BoltZip.DirMenu";
 
     public static void Install(string appExePath)
     {
+        var icon = $"\"{appExePath}\",0";
         var compress = $"\"{appExePath}\" --compress \"%1\"";
         var extract = $"\"{appExePath}\" --extract \"%1\"";
 
-        RegisterVerb($@"*\shell\{CompressVerb}", "Add to BoltZip archive\u2026", compress, appExePath);
-        RegisterVerb($@"*\shell\{ExtractVerb}", "Extract with BoltZip", extract, appExePath);
-        RegisterVerb($@"Directory\shell\{CompressVerb}", "Add to BoltZip archive\u2026", compress, appExePath);
+        // Files: BoltZip -> (Add to archive / Extract)
+        WriteCascadeRoot(@"*\shell\BoltZip", FileMenuKey, icon);
+        WriteSubCommand($@"{FileMenuKey}\shell\01_Compress", "Add to BoltZip archive", compress, icon);
+        WriteSubCommand($@"{FileMenuKey}\shell\02_Extract", "Extract with BoltZip", extract, icon);
+
+        // Folders: BoltZip -> (Add to archive)
+        WriteCascadeRoot(@"Directory\shell\BoltZip", DirMenuKey, icon);
+        WriteSubCommand($@"{DirMenuKey}\shell\01_Compress", "Add to BoltZip archive", compress, icon);
     }
 
     public static void Uninstall()
     {
-        DeleteVerb($@"*\shell\{CompressVerb}");
-        DeleteVerb($@"*\shell\{ExtractVerb}");
-        DeleteVerb($@"Directory\shell\{CompressVerb}");
+        DeleteKey(@"*\shell\BoltZip");
+        DeleteKey(@"Directory\shell\BoltZip");
+        DeleteKey(FileMenuKey);
+        DeleteKey(DirMenuKey);
     }
 
     public static bool IsInstalled()
     {
-        using var key = Registry.CurrentUser.OpenSubKey($@"{ClassesRoot}\*\shell\{CompressVerb}");
+        using var key = Registry.CurrentUser.OpenSubKey($@"{ClassesRoot}\*\shell\BoltZip");
         return key is not null;
     }
 
-    private static void RegisterVerb(string classesRelativePath, string label, string command, string iconPath)
+    private static void WriteCascadeRoot(string classesRelativePath, string subCommandsKey, string icon)
     {
-        using var shellKey = Registry.CurrentUser.CreateSubKey($@"{ClassesRoot}\{classesRelativePath}");
-        shellKey.SetValue("MUIVerb", label);
-        shellKey.SetValue("Icon", $"\"{iconPath}\",0");
+        using var key = Registry.CurrentUser.CreateSubKey($@"{ClassesRoot}\{classesRelativePath}");
+        key.SetValue("MUIVerb", "BoltZip");
+        key.SetValue("Icon", icon);
+        key.SetValue("ExtendedSubCommandsKey", subCommandsKey);
+    }
 
-        using var commandKey = shellKey.CreateSubKey("command");
+    private static void WriteSubCommand(string classesRelativePath, string label, string command, string icon)
+    {
+        using var key = Registry.CurrentUser.CreateSubKey($@"{ClassesRoot}\{classesRelativePath}");
+        key.SetValue("MUIVerb", label);
+        key.SetValue("Icon", icon);
+        using var commandKey = key.CreateSubKey("command");
         commandKey.SetValue(null, command);
     }
 
-    private static void DeleteVerb(string classesRelativePath)
+    private static void DeleteKey(string classesRelativePath)
     {
         try
         {

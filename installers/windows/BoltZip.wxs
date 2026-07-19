@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BoltZip Windows installer (WiX Toolset v4+).
+  Build:  wix build installers/windows/BoltZip.wxs -arch x64 -o dist/BoltZip-<version>.msi
+  Installs the GUI + bz CLI to Program Files, adds a Start-menu shortcut, puts bz on PATH,
+  and registers the right-click ("Add to BoltZip archive" / "Extract with BoltZip") menu.
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="BoltZip"
+           Manufacturer="Brian Santacruz"
+           Version="0.1.0.0"
+           UpgradeCode="7C2B9A64-4E3D-4C1B-9E7A-2B1F0C0D0E01"
+           Scope="perMachine">
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of BoltZip is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/bsantacruzms/Bzip" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="BoltZip" />
+    </StandardDirectory>
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Directory Id="AppProgramMenuDir" Name="BoltZip" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="BoltZip" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Component Id="GuiExe">
+        <File Id="BoltZipToolExe"
+              Source="$(sys.SOURCEFILEDIR)..\..\dist\BoltZipTool-0.1.0-portable.exe"
+              Name="BoltZipTool.exe"
+              KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut"
+                    Directory="AppProgramMenuDir"
+                    Name="BoltZip"
+                    WorkingDirectory="INSTALLFOLDER"
+                    Advertise="no" />
+        </File>
+        <RemoveFolder Id="RemoveAppMenuDir" Directory="AppProgramMenuDir" On="uninstall" />
+      </Component>
+
+      <Component Id="CliExe">
+        <File Id="BzExe"
+              Source="$(sys.SOURCEFILEDIR)..\..\dist\bz-0.1.0-portable.exe"
+              Name="bz.exe"
+              KeyPath="yes" />
+        <Environment Id="PathEnv" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="yes" Permanent="no" />
+      </Component>
+
+      <Component Id="ContextMenu">
+        <!-- Files: cascading "BoltZip" submenu -->
+        <RegistryKey Root="HKLM" Key="Software\Classes\*\shell\BoltZip" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Name="MUIVerb" Value="BoltZip" KeyPath="yes" />
+          <RegistryValue Type="string" Name="Icon" Value="[INSTALLFOLDER]BoltZipTool.exe,0" />
+          <RegistryValue Type="string" Name="ExtendedSubCommandsKey" Value="BoltZip.FileMenu" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="Software\Classes\BoltZip.FileMenu\shell\01_Compress" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Name="MUIVerb" Value="Add to BoltZip archive" />
+          <RegistryValue Type="string" Name="Icon" Value="[INSTALLFOLDER]BoltZipTool.exe,0" />
+          <RegistryKey Key="command">
+            <RegistryValue Type="string" Value="&quot;[INSTALLFOLDER]BoltZipTool.exe&quot; --compress &quot;%1&quot;" />
+          </RegistryKey>
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="Software\Classes\BoltZip.FileMenu\shell\02_Extract" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Name="MUIVerb" Value="Extract with BoltZip" />
+          <RegistryValue Type="string" Name="Icon" Value="[INSTALLFOLDER]BoltZipTool.exe,0" />
+          <RegistryKey Key="command">
+            <RegistryValue Type="string" Value="&quot;[INSTALLFOLDER]BoltZipTool.exe&quot; --extract &quot;%1&quot;" />
+          </RegistryKey>
+        </RegistryKey>
+
+        <!-- Folders: cascading "BoltZip" submenu -->
+        <RegistryKey Root="HKLM" Key="Software\Classes\Directory\shell\BoltZip" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Name="MUIVerb" Value="BoltZip" />
+          <RegistryValue Type="string" Name="Icon" Value="[INSTALLFOLDER]BoltZipTool.exe,0" />
+          <RegistryValue Type="string" Name="ExtendedSubCommandsKey" Value="BoltZip.DirMenu" />
+        </RegistryKey>
+        <RegistryKey Root="HKLM" Key="Software\Classes\BoltZip.DirMenu\shell\01_Compress" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Name="MUIVerb" Value="Add to BoltZip archive" />
+          <RegistryValue Type="string" Name="Icon" Value="[INSTALLFOLDER]BoltZipTool.exe,0" />
+          <RegistryKey Key="command">
+            <RegistryValue Type="string" Value="&quot;[INSTALLFOLDER]BoltZipTool.exe&quot; --compress &quot;%1&quot;" />
+          </RegistryKey>
+        </RegistryKey>
+      </Component>
+    </ComponentGroup>
+  </Package>
+</Wix>

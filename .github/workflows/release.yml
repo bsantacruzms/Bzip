@@ -4,25 +4,42 @@ on:
   push:
     tags: [ 'v*' ]
 
+permissions:
+  contents: write
+
 jobs:
-  release:
+  windows:
     runs-on: windows-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-
-      - name: Build portable executables
+      - name: Build portable exes and MSI installer
         shell: pwsh
-        run: ./scripts/build-release.ps1
-
-      - name: Publish GitHub release
+        run: |
+          ./scripts/build-release.ps1
+          dotnet tool install --global wix --version 5.0.2
+          $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
+          wix build installers/windows/BoltZip.wxs -arch x64 -o dist/BoltZip-0.1.0.msi
+      - name: Publish Windows artifacts
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.exe
+          files: |
+            dist/*.exe
+            dist/*.msi
           generate_release_notes: true
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build .app bundle and .dmg
+        run: bash scripts/build-macos.sh
+      - name: Publish macOS artifacts
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*.dmg

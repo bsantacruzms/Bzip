@@ -1,0 +1,8 @@
+# Keep shell scripts LF so they run on macOS/Linux CI.
+*.sh text eol=lf
+
+# Normalize common text files.
+*.cs text
+*.md text
+*.yml text
+*.ps1 text eol=crlf

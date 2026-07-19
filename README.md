@@ -6,6 +6,8 @@ automatic hardware optimization and a fast, authenticated‑encryption native fo
 BoltZip looks at *your* machine — CPU cores, RAM, storage type (NVMe/SSD/HDD/network), AES and
 SIMD support — and auto‑tunes every compression job. No other mainstream archiver does this.
 
+📊 **[Live showcase &amp; benchmarks →](https://bsantacruzms.github.io/Bzip/)**
+
 ---
 
 ## Why BoltZip is different
@@ -58,16 +60,35 @@ Comparison reflects the products' default/typical configurations and is provided
 - **BoltZip** is the only one that profiles your hardware, uses modern authenticated encryption by
   default in its native format, and is free, open, portable and scriptable.
 
+## Benchmarks
+
+Real numbers on a 100 MB mixed dataset (~50% text, 25% CSV, 25% incompressible), Intel Core Ultra 9
+285K (24 cores). Lower is better.
+
+| Tool | Format | Compress | Extract | Size |
+| --- | --- | ---: | ---: | ---: |
+| **BoltZip** | `.bz` | **5.4 s** | 3.8 s | **25.7 MB** |
+| BoltZip (fast) | `.bz` | 4.8 s | 3.7 s | 26.0 MB |
+| 7‑Zip | `.7z` | 7.4 s | 3.7 s | 25.8 MB |
+| 7‑Zip | `.zip` | 1.1 s | 3.6 s | 28.4 MB |
+| Windows Zip | `.zip` | 1.5 s | 0.2 s | 29.0 MB |
+
+BoltZip's auto‑tuned `.bz` is **faster than 7‑Zip's `.7z` and produces the smallest output** — with
+no manual settings. Reproduce it: `pwsh scripts/benchmark.ps1`. (WinRAR/WinZip weren't installed on
+the test machine, so they're shown in the feature table above but not timed.)
+
 ## Install
 
-Download the portable executables from the
-[Releases](https://github.com/bsantacruzms/Bzip/releases) page:
+**Windows** — download from the [Releases](https://github.com/bsantacruzms/Bzip/releases) page:
 
-- `BoltZipTool-<version>-portable.exe` — the desktop app
-- `bz-<version>-portable.exe` — the CLI
+- **`BoltZip-<version>.msi`** — installer. Adds the app + `bz` CLI, a Start‑menu entry, and a
+  cascading **“BoltZip”** right‑click menu (Add to archive / Extract) in Explorer.
+- **`BoltZipTool-<version>-portable.exe`** — the desktop app, no install (no system changes).
+- **`bz-<version>-portable.exe`** — the CLI.
 
-Nothing to install. To add the right‑click menu, open the app and click **Add right‑click menu**,
-or run `bz install-context`.
+**macOS** — `BoltZip-<version>-<arch>.dmg` (drag to Applications). **Linux** — `.deb` / `.rpm` / tarball.
+
+The right‑click menu is added by the installer only; the portable build never touches your system.
 
 ## CLI usage
 

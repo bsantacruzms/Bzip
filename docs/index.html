@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BoltZip — a modern, hardware-optimized archiver</title>
+    <meta name="description" content="BoltZip is a free, open-source archiver that auto-tunes compression to your hardware and ships a modern encrypted format. A faster, smarter alternative to 7-Zip and WinRAR." />
+    <link rel="icon" href="assets/logo.png" type="image/png" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="hero">
+        <div class="wrap">
+            <img class="logo" src="assets/logo.png" alt="BoltZip logo" width="96" height="96" />
+            <h1>Bolt<span class="accent">Zip</span></h1>
+            <p class="tagline">A modern, open-source archiver that tunes itself to <em>your</em> hardware — and ships a fast, authenticated-encryption format.</p>
+            <div class="cta">
+                <a class="btn primary" href="https://github.com/bsantacruzms/Bzip/releases">Download</a>
+                <a class="btn" href="https://github.com/bsantacruzms/Bzip">View on GitHub</a>
+            </div>
+            <p class="subtle small">Free &amp; open source · Windows today · macOS &amp; Linux in progress</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="wrap">
+            <h2>Why BoltZip is different</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="ico">🧠</div>
+                    <h3>Automatic hardware optimization</h3>
+                    <p>Profiles your CPU cores, RAM and storage (NVMe/SSD/HDD/network) and auto-tunes threads, window size, buffers and codec — per job. And it tells you <em>why</em>.</p>
+                </div>
+                <div class="card">
+                    <div class="ico">🔒</div>
+                    <h3>Modern authenticated encryption</h3>
+                    <p>The native <code>.bz</code> format uses <strong>XChaCha20-Poly1305</strong> with <strong>Argon2id</strong> key derivation. Tampering and wrong passwords fail loudly, not silently.</p>
+                </div>
+                <div class="card">
+                    <div class="ico">⚡</div>
+                    <h3>Fast modern codec</h3>
+                    <p>Built on <strong>Zstandard</strong>, which beats classic Deflate/LZMA on the speed-vs-ratio curve and scales across every core.</p>
+                </div>
+                <div class="card">
+                    <div class="ico">🆓</div>
+                    <h3>Free, open, no nag screens</h3>
+                    <p>No ads, no upsells, no trials. MIT-spirited and fully open source.</p>
+                </div>
+                <div class="card">
+                    <div class="ico">📦</div>
+                    <h3>Portable &amp; scriptable</h3>
+                    <p>Single-file executables, a friendly <code>bz</code> CLI, and a Windows right-click menu when you install it.</p>
+                </div>
+                <div class="card">
+                    <div class="ico">🌍</div>
+                    <h3>Cross-platform core</h3>
+                    <p>One Fluent desktop app for Windows, macOS and Linux — powered by the same .NET engine.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="wrap">
+            <h2>Real-world speed</h2>
+            <p class="subtle" id="bench-meta">Measured on this project's test machine.</p>
+            <div id="benchmark" class="bench">Loading benchmark…</div>
+            <p class="subtle small">Compress + extract wall-clock times and output size on a mixed dataset. Lower is better for time and size. WinRAR / WinZip were not installed on the test machine, so only measured tools are shown. Numbers vary by hardware and data.</p>
+        </section>
+
+        <section class="wrap">
+            <h2>How it compares</h2>
+            <div class="table-scroll">
+                <table class="compare">
+                    <thead>
+                        <tr>
+                            <th>Feature</th><th class="hl">⚡ BoltZip</th><th>7-Zip</th><th>WinRAR</th><th>WinZip</th><th>Windows ZIP</th><th>macOS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Price</td><td class="hl">Free</td><td>Free</td><td>Paid</td><td>Paid</td><td>Free</td><td>Free</td></tr>
+                        <tr><td>Open source</td><td class="hl y">✓</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Auto hardware optimization</td><td class="hl y">✓ unique</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Explains its tuning</td><td class="hl y">✓ unique</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Modern codec (Zstandard)</td><td class="hl y">✓ native</td><td class="p">~ fork</td><td class="n">✗</td><td class="p">~</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Authenticated encryption (AEAD)</td><td class="hl y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Argon2id password KDF</td><td class="hl y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Portable (no install)</td><td class="hl y">✓</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td><td>–</td><td>–</td></tr>
+                        <tr><td>CLI included</td><td class="hl y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="p">~</td><td class="p">~</td><td class="p">~</td></tr>
+                        <tr><td>Ad-free / no nag</td><td class="hl y">✓</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="y">✓</td><td class="y">✓</td></tr>
+                        <tr><td>Cross-platform</td><td class="hl y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="p">~</td><td class="n">✗</td><td class="n">✗</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="subtle small">✓ yes · ~ partial · ✗ no · – n/a. Reflects typical/default configurations, in good faith.</p>
+        </section>
+
+        <section class="wrap download">
+            <h2>Get BoltZip</h2>
+            <div class="grid">
+                <div class="card">
+                    <h3>Windows</h3>
+                    <p>Installer (<code>.msi</code>) adds the app, the <code>bz</code> CLI and the right-click menu. Or grab the portable <code>.exe</code>.</p>
+                    <a class="btn primary" href="https://github.com/bsantacruzms/Bzip/releases">Download for Windows</a>
+                </div>
+                <div class="card">
+                    <h3>macOS</h3>
+                    <p>A <code>.dmg</code> drag-to-Applications build (Apple Silicon &amp; Intel). Coming with the next release.</p>
+                    <a class="btn" href="https://github.com/bsantacruzms/Bzip/releases">Releases</a>
+                </div>
+                <div class="card">
+                    <h3>Linux</h3>
+                    <p><code>.deb</code>, <code>.rpm</code> and a portable tarball with the <code>bz</code> CLI. Coming with the next release.</p>
+                    <a class="btn" href="https://github.com/bsantacruzms/Bzip/releases">Releases</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="wrap">
+            <p>Created by <a href="https://briansantacruz.com">Brian Santacruz</a> · <a href="https://github.com/bsantacruzms/Bzip">GitHub</a></p>
+        </div>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>

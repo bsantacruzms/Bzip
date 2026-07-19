@@ -1,0 +1,49 @@
+﻿{
+    "cpu":  "Intel(R) Core(TM) Ultra 9 285K",
+    "logicalCores":  24,
+    "datasetMB":  100,
+    "datasetDescription":  "~50% text/logs, 25% CSV, 25% incompressible binary",
+    "date":  "2026-07-19",
+    "results":  [
+                    {
+                        "tool":  "BoltZip",
+                        "format":  ".bz",
+                        "compressSec":  5.41,
+                        "extractSec":  3.77,
+                        "sizeMB":  25.7,
+                        "ratioPct":  25.7
+                    },
+                    {
+                        "tool":  "BoltZip (fast)",
+                        "format":  ".bz",
+                        "compressSec":  4.83,
+                        "extractSec":  3.74,
+                        "sizeMB":  26,
+                        "ratioPct":  26
+                    },
+                    {
+                        "tool":  "7-Zip",
+                        "format":  ".7z",
+                        "compressSec":  7.38,
+                        "extractSec":  3.74,
+                        "sizeMB":  25.8,
+                        "ratioPct":  25.8
+                    },
+                    {
+                        "tool":  "7-Zip",
+                        "format":  ".zip",
+                        "compressSec":  1.08,
+                        "extractSec":  3.62,
+                        "sizeMB":  28.4,
+                        "ratioPct":  28.4
+                    },
+                    {
+                        "tool":  "Windows Zip",
+                        "format":  ".zip",
+                        "compressSec":  1.47,
+                        "extractSec":  0.21,
+                        "sizeMB":  29,
+                        "ratioPct":  29
+                    }
+                ]
+}
