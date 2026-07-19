@@ -61,7 +61,7 @@ Comparison reflects the products' default/typical configurations and is provided
 ## Install
 
 Download the portable executables from the
-[Releases](https://github.com/bsantacruzms/boltzip/releases) page:
+[Releases](https://github.com/bsantacruzms/Bzip/releases) page:
 
 - `BoltZipTool-<version>-portable.exe` — the desktop app
 - `bz-<version>-portable.exe` — the CLI
