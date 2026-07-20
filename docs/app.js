@@ -10,8 +10,11 @@ fetch('assets/benchmark.json')
 function render(d) {
     var meta = document.getElementById('bench-meta');
     if (d.cpu) {
+        var method = d.iterations && d.statistic
+            ? d.statistic + ' of ' + d.iterations + ' measured runs after warm-up; '
+            : '';
         meta.textContent = 'Measured on ' + d.cpu + ' (' + d.logicalCores + ' cores) — ' +
-            d.datasetMB + ' MB dataset (' + d.datasetDescription + '), ' + d.date + '.';
+            method + d.datasetMB + ' MB dataset (' + d.datasetDescription + '), ' + d.date + '.';
     }
 
     var results = d.results || [];

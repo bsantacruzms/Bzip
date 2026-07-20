@@ -35,7 +35,7 @@ public static class StandardArchive
         switch (format)
         {
             case ArchiveFormat.Zip:
-                CreateContainer(ArchiveType.Zip, new WriterOptions(CompressionType.Deflate), inputs, outputPath, progress, cancellationToken);
+                CreateZip(inputs, outputPath, plan, progress, cancellationToken);
                 break;
             case ArchiveFormat.Tar:
                 CreateContainer(ArchiveType.Tar, new WriterOptions(CompressionType.None), inputs, outputPath, progress, cancellationToken);
@@ -100,6 +100,52 @@ public static class StandardArchive
 
             return entries;
         }
+    }
+
+    private static void CreateZip(
+        IReadOnlyList<string> inputs,
+        string outputPath,
+        CompressionPlan plan,
+        IProgress<ArchiveProgress>? progress,
+        CancellationToken cancellationToken)
+    {
+        var files = InputScanner.EnumerateFiles(inputs);
+        var total = files.Count;
+        var level = ToCompressionLevel(plan.Level, 9);
+        var buffer = new byte[Math.Max(64 * 1024, plan.BufferBytes)];
+
+        using var outStream = File.Create(outputPath);
+        using var archive = new ZipArchive(outStream, ZipArchiveMode.Create);
+
+        var done = 0;
+        foreach (var (key, path) in files)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var entry = archive.CreateEntry(key.Replace('\\', '/'), level);
+            try
+            {
+                entry.LastWriteTime = File.GetLastWriteTime(path);
+            }
+            catch
+            {
+                // timestamps outside the zip epoch are ignored
+            }
+
+            using (var entryStream = entry.Open())
+            using (var source = File.OpenRead(path))
+            {
+                int read;
+                while ((read = source.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    entryStream.Write(buffer, 0, read);
+                }
+            }
+
+            done++;
+            progress?.Report(new ArchiveProgress(ArchivePhase.Compressing, key, done, total, done, total));
+        }
+
+        progress?.Report(new ArchiveProgress(ArchivePhase.Done, null, total, total, total, total));
     }
 
     private static void CreateContainer(

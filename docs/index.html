@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BoltZip — a modern, hardware-optimized archiver</title>
-    <meta name="description" content="BoltZip is a free, open-source archiver that auto-tunes compression to your hardware and ships a modern encrypted format. A faster, smarter alternative to 7-Zip and WinRAR." />
+    <meta name="description" content="BoltZip is a free, open-source archiver that auto-tunes compression to your hardware and ships a fast, modern authenticated-encryption format." />
     <link rel="icon" href="assets/logo.png" type="image/png" />
     <link rel="stylesheet" href="style.css" />
 </head>
@@ -63,7 +63,7 @@
             <h2>Real-world speed</h2>
             <p class="subtle" id="bench-meta">Measured on this project's test machine.</p>
             <div id="benchmark" class="bench">Loading benchmark…</div>
-            <p class="subtle small">Compress + extract wall-clock times and output size on a mixed dataset. Lower is better for time and size. WinRAR / WinZip were not installed on the test machine, so only measured tools are shown. Numbers vary by hardware and data.</p>
+            <p class="subtle small">The native-format comparison is BoltZip <code>.bz</code> versus 7-Zip <code>.7z</code>; the standard-format comparison uses <code>.zip</code> for every tool. BoltZip <code>.bz</code> won native compression time and size on this dataset, while 7-Zip and Windows won ZIP creation. Lower is better. WinRAR / WinZip were not installed, and results vary by hardware and data.</p>
         </section>
 
         <section class="wrap">

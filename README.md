@@ -67,15 +67,18 @@ Real numbers on a 100 MB mixed dataset (~50% text, 25% CSV, 25% incompressible),
 
 | Tool | Format | Compress | Extract | Size |
 | --- | --- | ---: | ---: | ---: |
-| **BoltZip** | `.bz` | **5.4 s** | 3.8 s | **25.7 MB** |
-| BoltZip (fast) | `.bz` | 4.8 s | 3.7 s | 26.0 MB |
-| 7‑Zip | `.7z` | 7.4 s | 3.7 s | 25.8 MB |
-| 7‑Zip | `.zip` | 1.1 s | 3.6 s | 28.4 MB |
-| Windows Zip | `.zip` | 1.5 s | 0.2 s | 29.0 MB |
+| **BoltZip** | `.bz` | **5.48 s** | 3.76 s | **25.7 MB** |
+| BoltZip (fast) | `.bz` | 4.62 s | 3.72 s | 26.0 MB |
+| **BoltZip** | `.zip` | 5.34 s | 0.32 s | 29.1 MB |
+| 7‑Zip | `.7z` | 8.93 s | 0.18 s | 25.8 MB |
+| 7‑Zip | `.zip` | **1.09 s** | **0.11 s** | **28.4 MB** |
+| Windows Zip | `.zip` | 1.33 s | 0.17 s | 29.0 MB |
 
-BoltZip's auto‑tuned `.bz` is **faster than 7‑Zip's `.7z` and produces the smallest output** — with
-no manual settings. Reproduce it: `pwsh scripts/benchmark.ps1`. (WinRAR/WinZip weren't installed on
-the test machine, so they're shown in the feature table above but not timed.)
+These are medians of three measured runs after warm-up. In the native-format comparison, BoltZip's
+auto-tuned `.bz` compressed faster and slightly smaller than 7-Zip's `.7z` on this dataset. In the
+standard ZIP comparison, 7-Zip and Windows compressed substantially faster than BoltZip. Formats and
+implementations have different tradeoffs, so this is not a claim that BoltZip wins every workload.
+Reproduce it with `pwsh scripts/benchmark.ps1`. (WinRAR/WinZip weren't installed on the test machine.)
 
 ## Install
 

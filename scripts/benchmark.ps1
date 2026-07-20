@@ -6,6 +6,8 @@
 #>
 param(
     [int]$SizeMB = 100,
+    [ValidateRange(1, 9)]
+    [int]$Iterations = 3,
     [string]$Bz = "$PSScriptRoot\..\dist\bz-0.1.0-portable.exe",
     [string]$SevenZip = "C:\Program Files\7-Zip\7z.exe",
     [string]$OutJson = "$PSScriptRoot\..\docs\assets\benchmark.json"
@@ -48,6 +50,15 @@ $outDir = Join-Path $work 'out'
 New-Item -ItemType Directory -Force $outDir | Out-Null
 $results = @()
 
+# Warm up: extract the single-file runtime and warm the OS disk cache so the first
+# measured run isn't penalised (fairer for every tool).
+if (Test-Path $Bz) {
+    Write-Host "Warming up ...`n"
+    $warm = Join-Path $outDir 'warm.bz'
+    & $Bz create $warm $data --goal fast -q 2>$null | Out-Null
+    Remove-Item $warm -Force -EA SilentlyContinue
+}
+
 function Measure-Sec([scriptblock]$block) {
     $sw = [Diagnostics.Stopwatch]::StartNew()
     & $block 2>$null | Out-Null
@@ -55,13 +66,26 @@ function Measure-Sec([scriptblock]$block) {
     return [math]::Round($sw.Elapsed.TotalSeconds, 2)
 }
 
+function Get-Median([double[]]$values) {
+    $sorted = @($values | Sort-Object)
+    $middle = [int][math]::Floor($sorted.Count / 2)
+    if (($sorted.Count % 2) -eq 1) { return $sorted[$middle] }
+    return [math]::Round(($sorted[$middle - 1] + $sorted[$middle]) / 2, 2)
+}
+
 function Add-Result($tool, $format, $archive, [scriptblock]$compress, $extractDir, [scriptblock]$extract) {
-    if (Test-Path $archive) { Remove-Item $archive -Force }
-    if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
-    New-Item -ItemType Directory -Force $extractDir | Out-Null
-    $c = Measure-Sec $compress
+    $compressTimes = @()
+    $extractTimes = @()
+    for ($iteration = 1; $iteration -le $Iterations; $iteration++) {
+        if (Test-Path $archive) { Remove-Item $archive -Force }
+        if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
+        New-Item -ItemType Directory -Force $extractDir | Out-Null
+        $compressTimes += Measure-Sec $compress
+        $extractTimes += Measure-Sec $extract
+    }
+    $c = Get-Median $compressTimes
+    $x = Get-Median $extractTimes
     $sizeMB = [math]::Round((Get-Item $archive).Length / 1MB, 1)
-    $x = Measure-Sec $extract
     $ratio = [math]::Round(($sizeMB / $datasetMB) * 100, 1)
     $script:results += [pscustomobject]@{ tool = $tool; format = $format; compressSec = $c; extractSec = $x; sizeMB = $sizeMB; ratioPct = $ratio }
     Write-Host ("{0,-14} {1,-6} compress {2,7}s   extract {3,7}s   {4,7} MB   {5,5}%" -f $tool, $format, $c, $x, $sizeMB, $ratio)
@@ -72,6 +96,8 @@ if (Test-Path $Bz) {
     Add-Result 'BoltZip' '.bz' $a { & $Bz create $a $data --goal balanced -q } $e { & $Bz extract $a --out $e -y -q }
     $a2 = Join-Path $outDir 'bzf.bz'; $e2 = Join-Path $outDir 'ex_bzf'
     Add-Result 'BoltZip (fast)' '.bz' $a2 { & $Bz create $a2 $data --goal fast -q } $e2 { & $Bz extract $a2 --out $e2 -y -q }
+    $az = Join-Path $outDir 'bz.zip'; $ez = Join-Path $outDir 'ex_bzzip'
+    Add-Result 'BoltZip' '.zip' $az { & $Bz create $az $data -q } $ez { & $Bz extract $az --out $ez -y -q }
 }
 
 if (Test-Path $SevenZip) {
@@ -89,6 +115,8 @@ $report = [ordered]@{
     logicalCores       = [Environment]::ProcessorCount
     datasetMB          = $datasetMB
     datasetDescription = "~50% text/logs, 25% CSV, 25% incompressible binary"
+    iterations         = $Iterations
+    statistic          = "median"
     date               = (Get-Date).ToString('yyyy-MM-dd')
     results            = $results
 }
