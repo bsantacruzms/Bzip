@@ -18,6 +18,10 @@
 
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/bsantacruzms/Bzip" />
 
+    <!-- App icon shown in "Installed apps" / Add-Remove Programs and the wizard. -->
+    <Icon Id="BoltZipIcon.ico" SourceFile="$(sys.SOURCEFILEDIR)..\..\src\BoltZip.App\Assets\boltzip.ico" />
+    <Property Id="ARPPRODUCTICON" Value="BoltZipIcon.ico" />
+
     <!-- Setup wizard. The feature tree lets the user opt in or out of file associations. -->
     <ui:WixUI Id="WixUI_FeatureTree" />
     <WixVariable Id="WixUILicenseRtf" Value="$(sys.SOURCEFILEDIR)license.rtf" />
