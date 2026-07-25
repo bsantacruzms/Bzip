@@ -161,9 +161,14 @@ On macOS and Linux, run `bash scripts/build-macos.sh` (produces the `.dmg`) or
 - Extraction guards against path traversal ("Zip Slip").
 - Passwords are never logged and are zeroed after key derivation.
 
+## Contributing
+
+BoltZip is free and open source, and contributions are welcome. Found a bug or have an
+idea? [Open an issue](https://github.com/bsantacruzms/Bzip/issues) or send a pull request.
+
 ## License
 
-Open source. See `LICENSE`.
+Free and open source under the [MIT license](LICENSE) — use it, study it, and build on it.
 
 ---
 

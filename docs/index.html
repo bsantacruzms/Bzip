@@ -15,10 +15,10 @@
             <h1>Bolt<span class="accent">Zip</span></h1>
             <p class="tagline">A modern, open-source archiver that tunes itself to <em>your</em> hardware — and ships a fast, authenticated-encryption format.</p>
             <div class="cta">
-                <a class="btn primary" href="https://github.com/bsantacruzms/Bzip/releases">Download</a>
+                <a class="btn primary" id="hero-download" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download</a>
                 <a class="btn" href="https://github.com/bsantacruzms/Bzip">View on GitHub</a>
             </div>
-            <p class="subtle small">Free &amp; open source · Windows today · macOS &amp; Linux in progress</p>
+            <p class="subtle small">100% free &amp; open source (MIT) · Windows, macOS &amp; Linux · contributions welcome</p>
         </div>
     </header>
 
@@ -95,21 +95,43 @@
 
         <section class="wrap download">
             <h2>Get BoltZip</h2>
+            <p class="subtle" id="dl-version">Fetching the latest release…</p>
             <div class="grid">
-                <div class="card">
-                    <h3>Windows</h3>
-                    <p>Installer (<code>.msi</code>) adds the app, the <code>bz</code> CLI, the right-click menu, and optional file associations so archives open in BoltZip. Or grab the portable <code>.exe</code>.</p>
-                    <a class="btn primary" href="https://github.com/bsantacruzms/Bzip/releases">Download for Windows</a>
+                <div class="card dl-card">
+                    <h3>🪟 Windows</h3>
+                    <p>Installer (<code>.msi</code>) adds the app, the <code>bz</code> CLI, the right-click menu, and optional file associations so archives open in BoltZip.</p>
+                    <a class="btn primary dl-primary" id="dl-win-msi" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download for Windows (.msi)</a>
+                    <div class="dl-links">
+                        <a class="btn" id="dl-win-exe" href="https://github.com/bsantacruzms/Bzip/releases/latest">Portable app (.exe)</a>
+                        <a class="btn" id="dl-win-cli" href="https://github.com/bsantacruzms/Bzip/releases/latest">CLI (.exe)</a>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3>macOS</h3>
-                    <p>A <code>.dmg</code> drag-to-Applications build (Apple Silicon &amp; Intel). Archives open with BoltZip from Finder’s “Open With”.</p>
-                    <a class="btn" href="https://github.com/bsantacruzms/Bzip/releases">Releases</a>
+                <div class="card dl-card">
+                    <h3>🍎 macOS</h3>
+                    <p>A <code>.dmg</code> drag-to-Applications build. Archives open with BoltZip from Finder’s “Open With”.</p>
+                    <a class="btn primary dl-primary" id="dl-mac-arm" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download for macOS (Apple Silicon)</a>
+                    <div class="dl-links">
+                        <a class="btn" id="dl-mac-x64" href="https://github.com/bsantacruzms/Bzip/releases/latest">Intel Mac (.dmg)</a>
+                    </div>
                 </div>
-                <div class="card">
-                    <h3>Linux</h3>
-                    <p><code>.deb</code>, <code>.rpm</code> and a portable tarball with the <code>bz</code> CLI. Registers the <code>.bz</code> type and file-manager associations.</p>
-                    <a class="btn" href="https://github.com/bsantacruzms/Bzip/releases">Releases</a>
+                <div class="card dl-card">
+                    <h3>🐧 Linux</h3>
+                    <p>Native packages plus a portable tarball with the <code>bz</code> CLI. Registers the <code>.bz</code> type and file-manager associations.</p>
+                    <a class="btn primary dl-primary" id="dl-lin-deb" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download for Linux (.deb)</a>
+                    <div class="dl-links">
+                        <a class="btn" id="dl-lin-rpm" href="https://github.com/bsantacruzms/Bzip/releases/latest">.rpm</a>
+                        <a class="btn" id="dl-lin-tar" href="https://github.com/bsantacruzms/Bzip/releases/latest">tarball (.tar.gz)</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card contribute">
+                <h3>🆓 Free &amp; open source — forever</h3>
+                <p>BoltZip is released under the permissive <strong>MIT license</strong>: no ads, no trials, no telemetry. Anyone can use it, study the source, and contribute — open an issue, request a feature, or send a pull request.</p>
+                <div class="dl-links">
+                    <a class="btn" href="https://github.com/bsantacruzms/Bzip">⭐ Star on GitHub</a>
+                    <a class="btn" href="https://github.com/bsantacruzms/Bzip/issues">🐛 Report an issue</a>
+                    <a class="btn" href="https://github.com/bsantacruzms/Bzip/pulls">🔧 Contribute a PR</a>
                 </div>
             </div>
         </section>

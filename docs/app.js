@@ -45,3 +45,77 @@ function render(d) {
         '<th>Extract</th><th>Size</th><th>Ratio</th>' +
         '</tr></thead><tbody>' + rows + '</tbody></table>';
 }
+
+// ---- Download buttons: point to the latest GitHub release assets ----
+(function () {
+    var REPO = 'bsantacruzms/Bzip';
+    var LATEST_PAGE = 'https://github.com/' + REPO + '/releases/latest';
+
+    // Button id -> matcher over the release asset file name.
+    var MAP = {
+        'dl-win-msi': function (n) { return /\.msi$/i.test(n); },
+        'dl-win-exe': function (n) { return /^BoltZipTool-.*\.exe$/i.test(n); },
+        'dl-win-cli': function (n) { return /^bz-.*\.exe$/i.test(n); },
+        'dl-mac-arm': function (n) { return /arm64\.dmg$/i.test(n); },
+        'dl-mac-x64': function (n) { return /x64\.dmg$/i.test(n); },
+        'dl-lin-deb': function (n) { return /amd64\.deb$/i.test(n); },
+        'dl-lin-rpm': function (n) { return /x86_64\.rpm$/i.test(n); },
+        'dl-lin-tar': function (n) { return /linux-x64\.tar\.gz$/i.test(n); }
+    };
+
+    function detectOs() {
+        var s = (navigator.userAgent || '') + ' ' + (navigator.platform || '');
+        if (/Windows|Win32|Win64/i.test(s)) return 'win';
+        if (/Macintosh|Mac OS X|MacIntel/i.test(s)) return 'mac';
+        if (/Linux|X11/i.test(s)) return 'linux';
+        return 'win';
+    }
+
+    function setHref(id, url) {
+        var el = document.getElementById(id);
+        if (el && url) { el.href = url; }
+    }
+
+    function updateHero(assets) {
+        var os = detectOs();
+        var label = { win: 'Windows', mac: 'macOS', linux: 'Linux' }[os];
+        var match = {
+            win: function (n) { return /\.msi$/i.test(n); },
+            mac: function (n) { return /arm64\.dmg$/i.test(n) || /\.dmg$/i.test(n); },
+            linux: function (n) { return /amd64\.deb$/i.test(n) || /linux-x64\.tar\.gz$/i.test(n); }
+        }[os];
+        var hero = document.getElementById('hero-download');
+        if (!hero) { return; }
+        hero.textContent = 'Download for ' + label;
+        if (assets) {
+            var a = assets.filter(function (x) { return match(x.name); })[0];
+            if (a) { hero.href = a.browser_download_url; }
+        }
+    }
+
+    fetch('https://api.github.com/repos/' + REPO + '/releases/latest', {
+        headers: { 'Accept': 'application/vnd.github+json' }
+    })
+        .then(function (r) { if (!r.ok) { throw new Error('no release'); } return r.json(); })
+        .then(function (rel) {
+            var assets = rel.assets || [];
+            var ver = document.getElementById('dl-version');
+            if (ver) {
+                var when = rel.published_at ? ' · ' + new Date(rel.published_at).toLocaleDateString() : '';
+                ver.innerHTML = 'Latest release: <strong>' + (rel.tag_name || 'latest') + '</strong>' + when +
+                    ' · <a href="' + LATEST_PAGE + '">all downloads</a>';
+            }
+            Object.keys(MAP).forEach(function (id) {
+                var a = assets.filter(function (x) { return MAP[id](x.name); })[0];
+                if (a) { setHref(id, a.browser_download_url); }
+            });
+            updateHero(assets);
+        })
+        .catch(function () {
+            var ver = document.getElementById('dl-version');
+            if (ver) {
+                ver.innerHTML = 'Get the newest build on the <a href="' + LATEST_PAGE + '">releases page</a>.';
+            }
+            updateHero(null);
+        });
+})();

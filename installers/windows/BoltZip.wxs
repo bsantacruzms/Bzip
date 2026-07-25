@@ -16,7 +16,9 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of BoltZip is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
-    <Property Id="ARPURLINFOABOUT" Value="https://github.com/bsantacruzms/Bzip" />
+    <Property Id="ARPURLINFOABOUT" Value="https://bsantacruzms.github.io/Bzip/" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/bsantacruzms/Bzip" />
+    <Property Id="ARPURLUPDATEINFO" Value="https://github.com/bsantacruzms/Bzip/releases/latest" />
 
     <!-- App icon shown in "Installed apps" / Add-Remove Programs and the wizard. -->
     <Icon Id="BoltZipIcon.ico" SourceFile="$(sys.SOURCEFILEDIR)..\..\src\BoltZip.App\Assets\boltzip.ico" />

@@ -116,6 +116,14 @@ table.compare .p { color: var(--warn); }
 
 /* Download */
 .download .btn { margin-top: 12px; }
+.dl-card { display: flex; flex-direction: column; }
+.dl-card p { flex: 1; }
+.dl-primary { align-self: flex-start; }
+.dl-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.dl-links .btn { margin-top: 0; padding: 7px 14px; font-size: 0.85rem; }
+.contribute { margin-top: 20px; text-align: center; }
+.contribute p { color: var(--subtle); max-width: 720px; margin: 6px auto 0; }
+.contribute .dl-links { justify-content: center; margin-top: 16px; }
 
 /* Footer */
 footer { border-top: 1px solid var(--border); padding: 30px 0; text-align: center; color: var(--subtle); }
