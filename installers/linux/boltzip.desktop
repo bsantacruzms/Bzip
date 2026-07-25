@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=BoltZip
+GenericName=Archive Manager
+Comment=Modern, hardware-optimized archiver with authenticated encryption
+Exec=boltzip %F
+TryExec=boltzip
+Icon=boltzip
+Terminal=false
+Categories=Utility;Archiving;Compression;
+Keywords=archive;zip;7z;rar;tar;compression;extract;backup;
+MimeType=application/x-boltzip;application/zip;application/x-7z-compressed;application/x-rar;application/vnd.rar;application/x-tar;application/gzip;application/x-gzip;application/x-bzip;application/x-bzip2;application/zstd;application/x-zstd;application/x-xz;application/x-lzip;application/x-brotli;

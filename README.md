@@ -85,13 +85,29 @@ Reproduce it with `pwsh scripts/benchmark.ps1`. (WinRAR/WinZip weren't installed
 **Windows** — download from the [Releases](https://github.com/bsantacruzms/Bzip/releases) page:
 
 - **`BoltZip-<version>.msi`** — installer. Adds the app + `bz` CLI, a Start‑menu entry, and a
-  cascading **“BoltZip”** right‑click menu (Add to archive / Extract) in Explorer.
+  cascading **“BoltZip”** right‑click menu (Add to archive / Extract) in Explorer. The setup wizard
+  also has a checkbox (on by default) to **associate archives** — `.bz`, `.zip`, `.7z`, `.rar`,
+  `.tar`, `.gz`, `.zst`, `.xz` and more — so double‑clicking one opens it in BoltZip.
 - **`BoltZipTool-<version>-portable.exe`** — the desktop app, no install (no system changes).
 - **`bz-<version>-portable.exe`** — the CLI.
 
-**macOS** — `BoltZip-<version>-<arch>.dmg` (drag to Applications). **Linux** — `.deb` / `.rpm` / tarball.
+**macOS** — `BoltZip-<version>-<arch>.dmg` (drag to Applications). The app declares the archive types
+it can open, so they list BoltZip under **Finder → Open With** (pick *Change All…* to make it the default).
 
-The right‑click menu is added by the installer only; the portable build never touches your system.
+**Linux** — install the package for your distro, or use the portable tarball:
+
+```bash
+# Debian / Ubuntu
+sudo apt install ./boltzip_<version>_amd64.deb
+# Fedora / RHEL / openSUSE
+sudo dnf install ./boltzip-<version>-1.x86_64.rpm
+# Portable (any distro): extract, then link the file types
+tar xzf BoltZip-<version>-linux-x64.tar.gz && cd BoltZip-<version>-linux-x64 && ./install.sh
+```
+
+The `.deb`/`.rpm` register the `.bz` MIME type and add BoltZip to the file manager’s “Open with”.
+Right‑click menus and file associations are added by the installers only; the portable builds never
+touch your system unless you run `install.sh`.
 
 ## CLI usage
 
@@ -126,6 +142,9 @@ dotnet test tests/BoltZip.Core.Tests/BoltZip.Core.Tests.csproj
 # Portable single‑file executables into dist/
 powershell -ExecutionPolicy Bypass -File scripts/build-release.ps1
 ```
+
+On macOS and Linux, run `bash scripts/build-macos.sh` (produces the `.dmg`) or
+`bash scripts/build-linux.sh` (produces the `.deb`, `.rpm` and portable tarball).
 
 ## Project layout
 

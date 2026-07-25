@@ -5,7 +5,8 @@
   Installs the GUI + bz CLI to Program Files, adds a Start-menu shortcut, puts bz on PATH,
   and registers the right-click ("Add to BoltZip archive" / "Extract with BoltZip") menu.
 -->
-<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="BoltZip"
            Manufacturer="Brian Santacruz"
            Version="0.1.0.0"
@@ -17,6 +18,10 @@
 
     <Property Id="ARPURLINFOABOUT" Value="https://github.com/bsantacruzms/Bzip" />
 
+    <!-- Setup wizard. The feature tree lets the user opt in or out of file associations. -->
+    <ui:WixUI Id="WixUI_FeatureTree" />
+    <WixVariable Id="WixUILicenseRtf" Value="$(sys.SOURCEFILEDIR)license.rtf" />
+
     <StandardDirectory Id="ProgramFiles64Folder">
       <Directory Id="INSTALLFOLDER" Name="BoltZip" />
     </StandardDirectory>
@@ -24,8 +29,14 @@
       <Directory Id="AppProgramMenuDir" Name="BoltZip" />
     </StandardDirectory>
 
-    <Feature Id="Main" Title="BoltZip" Level="1">
+    <Feature Id="Main" Title="BoltZip (application)" Level="1" AllowAbsent="no"
+             Description="The BoltZip app, the bz command-line tool, and the right-click menu.">
       <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+
+    <Feature Id="FileAssoc" Title="Open archives with BoltZip" Level="1" AllowAbsent="yes"
+             Description="Associate .bz, .zip, .7z, .rar, .tar, .gz, .zst, .xz and other archives with BoltZip so you can double-click to open them. Uncheck to skip.">
+      <ComponentGroupRef Id="AssocFiles" />
     </Feature>
 
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
@@ -86,6 +97,68 @@
             <RegistryValue Type="string" Value="&quot;[INSTALLFOLDER]BoltZipTool.exe&quot; --compress &quot;%1&quot;" />
           </RegistryKey>
         </RegistryKey>
+      </Component>
+    </ComponentGroup>
+
+    <!-- File-type associations: double-click an archive to open it with BoltZip. -->
+    <ComponentGroup Id="AssocFiles" Directory="INSTALLFOLDER">
+      <!-- Shared ProgID that opens an archive with the BoltZip app. -->
+      <Component Id="AssocProgId" Guid="*">
+        <RegistryKey Root="HKLM" Key="Software\Classes\BoltZip.Archive" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="BoltZip Archive" KeyPath="yes" />
+          <RegistryValue Key="DefaultIcon" Type="string" Value="[INSTALLFOLDER]BoltZipTool.exe,0" />
+          <RegistryValue Key="shell\open\command" Type="string" Value="&quot;[INSTALLFOLDER]BoltZipTool.exe&quot; &quot;%1&quot;" />
+        </RegistryKey>
+      </Component>
+
+      <!-- Register the app so Windows lists BoltZip under "Open with" for every archive type. -->
+      <Component Id="AssocApp" Guid="*">
+        <RegistryKey Root="HKLM" Key="Software\Classes\Applications\BoltZipTool.exe" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Name="FriendlyAppName" Value="BoltZip" KeyPath="yes" />
+          <RegistryValue Key="shell\open\command" Type="string" Value="&quot;[INSTALLFOLDER]BoltZipTool.exe&quot; &quot;%1&quot;" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".bz" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".zip" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".7z" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".rar" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".tar" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".gz" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".tgz" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".bz2" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".tbz2" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".zst" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".tzst" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".xz" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".txz" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".br" Value="" />
+          <RegistryValue Key="SupportedTypes" Type="string" Name=".lz" Value="" />
+        </RegistryKey>
+      </Component>
+
+      <!-- BoltZip owns .bz: make it the default handler. -->
+      <Component Id="AssocBz" Guid="*">
+        <RegistryKey Root="HKLM" Key="Software\Classes\.bz" ForceDeleteOnUninstall="yes">
+          <RegistryValue Type="string" Value="BoltZip.Archive" KeyPath="yes" />
+          <RegistryValue Key="OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        </RegistryKey>
+      </Component>
+
+      <!-- Other archive types: add BoltZip as an option without disturbing existing defaults. -->
+      <Component Id="AssocOthers" Guid="*">
+        <RegistryValue Root="HKLM" Key="Software\Classes\BoltZip.Archive\Associations" Name="installed" Type="string" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.zip\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.7z\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.rar\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.tar\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.gz\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.tgz\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.bz2\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.tbz2\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.zst\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.tzst\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.xz\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.txz\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.br\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
+        <RegistryValue Root="HKLM" Key="Software\Classes\.lz\OpenWithProgids" Type="string" Name="BoltZip.Archive" Value="" />
       </Component>
     </ComponentGroup>
   </Package>

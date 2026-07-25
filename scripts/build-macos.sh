@@ -57,6 +57,47 @@ for RID in osx-arm64 osx-x64; do
     <key>CFBundlePackageType</key><string>APPL</string>
     <key>LSMinimumSystemVersion</key><string>11.0</string>
     <key>NSHighResolutionCapable</key><true/>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key><string>BoltZip Archive</string>
+            <key>CFBundleTypeRole</key><string>Editor</string>
+            <key>LSHandlerRank</key><string>Owner</string>
+            <key>CFBundleTypeIconFile</key><string>boltzip</string>
+            <key>LSItemContentTypes</key>
+            <array><string>com.briansantacruz.boltzip.archive</string></array>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>bz</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>Archive</string>
+            <key>CFBundleTypeRole</key><string>Editor</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>CFBundleTypeIconFile</key><string>boltzip</string>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>zip</string><string>7z</string><string>rar</string>
+                <string>tar</string><string>gz</string><string>tgz</string>
+                <string>bz2</string><string>tbz2</string><string>zst</string>
+                <string>tzst</string><string>xz</string><string>txz</string>
+                <string>br</string><string>lz</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key><string>com.briansantacruz.boltzip.archive</string>
+            <key>UTTypeDescription</key><string>BoltZip Archive</string>
+            <key>UTTypeIconFile</key><string>boltzip</string>
+            <key>UTTypeConformsTo</key>
+            <array><string>public.data</string><string>public.archive</string></array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key><array><string>bz</string></array>
+            </dict>
+        </dict>
+    </array>
 </dict>
 </plist>
 PLIST
