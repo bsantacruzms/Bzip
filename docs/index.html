@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BoltZip — a modern, hardware-optimized archiver</title>
+    <title>BoltZip, a modern, hardware-optimized archiver</title>
     <meta name="description" content="BoltZip is a free, open-source archiver that auto-tunes compression to your hardware and ships a fast, modern authenticated-encryption format." />
     <link rel="icon" href="assets/logo.png" type="image/png" />
     <link rel="stylesheet" href="style.css" />
@@ -13,7 +13,7 @@
         <div class="wrap">
             <img class="logo" src="assets/logo.png" alt="BoltZip logo" width="96" height="96" />
             <h1>Bolt<span class="accent">Zip</span></h1>
-            <p class="tagline">A modern, open-source archiver that tunes itself to <em>your</em> hardware — and ships a fast, authenticated-encryption format.</p>
+            <p class="tagline">A modern, open-source archiver that tunes itself to <em>your</em> hardware, and ships a fast, authenticated-encryption format.</p>
             <div class="cta">
                 <a class="btn primary" id="hero-download" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download</a>
                 <a class="btn" href="https://github.com/bsantacruzms/Bzip">View on GitHub</a>
@@ -29,7 +29,7 @@
                 <div class="card">
                     <div class="ico">🧠</div>
                     <h3>Automatic hardware optimization</h3>
-                    <p>Profiles your CPU cores, RAM and storage (NVMe/SSD/HDD/network) and auto-tunes threads, window size, buffers and codec — per job. And it tells you <em>why</em>.</p>
+                    <p>Profiles your CPU cores, RAM and storage (NVMe/SSD/HDD/network) and auto-tunes threads, window size, buffers and codec, per job. And it tells you <em>why</em>.</p>
                 </div>
                 <div class="card">
                     <div class="ico">🔒</div>
@@ -54,7 +54,7 @@
                 <div class="card">
                     <div class="ico">🌍</div>
                     <h3>Cross-platform core</h3>
-                    <p>One Fluent desktop app for Windows, macOS and Linux — powered by the same .NET engine.</p>
+                    <p>One Fluent desktop app for Windows, macOS and Linux, powered by the same .NET engine.</p>
                 </div>
             </div>
         </section>
@@ -63,7 +63,7 @@
             <h2>Real-world speed</h2>
             <p class="subtle" id="bench-meta">Measured on this project's test machine.</p>
             <div id="benchmark" class="bench">Loading benchmark…</div>
-            <p class="subtle small">Native-format comparison — BoltZip <code>.bz</code> vs 7-Zip <code>.7z</code>: BoltZip compressed <strong>about 2× faster and slightly smaller</strong> on this dataset. For plain <code>.zip</code> creation, 7-Zip and Windows are still fastest (single-threaded Deflate); BoltZip’s win is its multi-core native format. Medians of 3 warmed runs — lower is better. WinRAR / WinZip weren’t installed, so they’re feature-compared below, not timed.</p>
+            <p class="subtle small">Native-format comparison, BoltZip <code>.bz</code> vs 7-Zip <code>.7z</code>: BoltZip compressed <strong>about 2× faster and slightly smaller</strong> on this dataset. For plain <code>.zip</code> creation, 7-Zip and Windows are still fastest (single-threaded Deflate); BoltZip’s win is its multi-core native format. Medians of 3 warmed runs, lower is better. WinRAR / WinZip weren’t installed, so they’re feature-compared below, not timed.</p>
         </section>
 
         <section class="wrap">
@@ -95,7 +95,7 @@
 
         <section class="wrap">
             <h2>Security by design</h2>
-            <p class="subtle">Archivers are a favorite malware entry point. 7-Zip alone shipped serious fixes recently — here are two real ones, and how BoltZip’s architecture avoids whole classes of such bugs.</p>
+            <p class="subtle">Archivers are a favorite malware entry point. 7-Zip alone shipped serious fixes recently, here are two real ones, and how BoltZip’s architecture avoids whole classes of such bugs.</p>
             <div class="grid">
                 <div class="card cve">
                     <span class="cve-id">CVE-2024-11477 · CVSS 7.8</span>
@@ -110,11 +110,11 @@
                 <div class="card cve">
                     <span class="cve-id">BoltZip · by construction</span>
                     <h3>How BoltZip mitigates</h3>
-                    <p class="mitigation"><strong>Memory-safe engine:</strong> the whole pipeline is managed .NET — bounds-checked, so the integer-underflow / buffer-overflow class behind native RCEs (like the Zstd bug at left) is structurally avoided.</p>
+                    <p class="mitigation"><strong>Memory-safe engine:</strong> the whole pipeline is managed .NET, bounds-checked, so the integer-underflow / buffer-overflow class behind native RCEs (like the Zstd bug at left) is structurally avoided.</p>
                     <p class="mitigation"><strong>Authenticated format:</strong> <code>.bz</code> uses XChaCha20-Poly1305 (AEAD) + Argon2id; tampering, truncation and reordering fail loudly, and extraction guards against path traversal (“Zip Slip”).</p>
                 </div>
             </div>
-            <p class="subtle small">Sources: NVD — CVE-2024-11477 (CWE-191, integer underflow) and CVE-2025-0411 (CWE-693, in CISA KEV). No software is invulnerable, but a managed, authenticated, fully open-source design removes entire categories of risk instead of patching them one by one.</p>
+            <p class="subtle small">Sources: NVD, CVE-2024-11477 (CWE-191, integer underflow) and CVE-2025-0411 (CWE-693, in CISA KEV). No software is invulnerable, but a managed, authenticated, fully open-source design removes entire categories of risk instead of patching them one by one.</p>
         </section>
 
         <section class="wrap download">
@@ -150,8 +150,8 @@
             </div>
 
             <div class="card contribute">
-                <h3>🆓 Free &amp; open source — forever</h3>
-                <p>BoltZip is released under the permissive <strong>MIT license</strong>: no ads, no trials, no telemetry. Anyone can use it, study the source, and contribute — open an issue, request a feature, or send a pull request.</p>
+                <h3>🆓 Free &amp; open source, forever</h3>
+                <p>BoltZip is released under the permissive <strong>MIT license</strong>: no ads, no trials, no telemetry. Anyone can use it, study the source, and contribute, open an issue, request a feature, or send a pull request.</p>
                 <div class="dl-links">
                     <a class="btn" href="https://github.com/bsantacruzms/Bzip">⭐ Star on GitHub</a>
                     <a class="btn" href="https://github.com/bsantacruzms/Bzip/issues">🐛 Report an issue</a>
@@ -161,7 +161,7 @@
 
             <div class="card donate">
                 <h3>💛 Support development</h3>
-                <p>BoltZip is free and MIT-licensed. If it saves you time, tips are appreciated — scan a QR code or copy an address.</p>
+                <p>BoltZip is free and MIT-licensed. If it saves you time, tips are appreciated, scan a QR code or copy an address.</p>
                 <div class="wallets">
                     <div class="wallet">
                         <img class="qr" src="assets/xrp-qr.svg" alt="XRP donation address QR code" width="168" height="168" />

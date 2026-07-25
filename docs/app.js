@@ -13,7 +13,7 @@ function render(d) {
         var method = d.iterations && d.statistic
             ? d.statistic + ' of ' + d.iterations + ' measured runs after warm-up; '
             : '';
-        meta.textContent = 'Measured on ' + d.cpu + ' (' + d.logicalCores + ' cores) — ' +
+        meta.textContent = 'Measured on ' + d.cpu + ' (' + d.logicalCores + ' cores), ' +
             method + d.datasetMB + ' MB dataset (' + d.datasetDescription + '), ' + d.date + '.';
     }
 
