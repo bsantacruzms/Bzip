@@ -12,6 +12,7 @@
     <AssemblyName>bz</AssemblyName>
     <RootNamespace>BoltZip.Cli</RootNamespace>
     <InvariantGlobalization>true</InvariantGlobalization>
+    <ApplicationIcon Condition="'$(RuntimeIdentifier)' == '' Or $(RuntimeIdentifier.StartsWith('win'))">..\BoltZip.App\Assets\boltzip.ico</ApplicationIcon>
   </PropertyGroup>
 
 </Project>

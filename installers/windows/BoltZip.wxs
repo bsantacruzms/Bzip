@@ -8,7 +8,7 @@
 <Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="BoltZip"
-           Manufacturer="Brian Santacruz"
+           Manufacturer="BoltZip"
            Version="1.0.0.0"
            UpgradeCode="7C2B9A64-4E3D-4C1B-9E7A-2B1F0C0D0E01"
            Scope="perMachine">

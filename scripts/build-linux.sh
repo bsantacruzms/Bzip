@@ -16,7 +16,7 @@ cd "$ROOT"
 
 VERSION="$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props | head -n1 || true)"
 VERSION="${VERSION:-1.0.0}"
-MAINTAINER="Brian Santacruz <bsantacruzms@users.noreply.github.com>"
+MAINTAINER="BoltZip"
 URL="https://github.com/bsantacruzms/Bzip"
 DESC="Modern, hardware-optimized archiver with a fast authenticated-encryption format."
 ICON="src/BoltZip.App/Assets/boltzip.png"
@@ -98,14 +98,14 @@ EOF
         rm -f "dist/boltzip_${VERSION}_${debarch}.deb" "dist/boltzip-${VERSION}-1.${rpmarch}.rpm"
         fpm -s dir -t deb -n boltzip -v "$VERSION" -a "$debarch" \
             --description "$DESC" --url "$URL" --maintainer "$MAINTAINER" \
-            --license "MIT" --vendor "briansantacruz.com" --category utils \
+            --license "MIT" --vendor "BoltZip" --category utils \
             --deb-recommends libfontconfig1 --deb-recommends libx11-6 \
             --after-install installers/linux/postinstall.sh \
             --after-remove installers/linux/postremove.sh \
             -C "$stage" -p "dist/boltzip_${VERSION}_${debarch}.deb" usr
         fpm -s dir -t rpm -n boltzip -v "$VERSION" -a "$rpmarch" \
             --description "$DESC" --url "$URL" --maintainer "$MAINTAINER" \
-            --license "MIT" --vendor "briansantacruz.com" --category "Applications/Archiving" \
+            --license "MIT" --vendor "BoltZip" --category "Applications/Archiving" \
             --after-install installers/linux/postinstall.sh \
             --after-remove installers/linux/postremove.sh \
             -C "$stage" -p "dist/boltzip-${VERSION}-1.${rpmarch}.rpm" usr

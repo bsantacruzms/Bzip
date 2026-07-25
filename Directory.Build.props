@@ -4,10 +4,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <Version>1.0.0</Version>
-    <Authors>Brian Santacruz</Authors>
-    <Company>briansantacruz.com</Company>
+    <Authors>BoltZip</Authors>
+    <Company>BoltZip</Company>
     <Product>BoltZip</Product>
-    <Copyright>Created by Brian Santacruz — briansantacruz.com</Copyright>
+    <Copyright>Copyright (c) 2026 The BoltZip Authors</Copyright>
     <NeutralLanguage>en</NeutralLanguage>
   </PropertyGroup>
 </Project>

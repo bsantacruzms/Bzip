@@ -416,7 +416,7 @@ public partial class MainWindow : Window
     {
         try
         {
-            Process.Start(new ProcessStartInfo("https://briansantacruz.com") { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo("https://github.com/bsantacruzms/Bzip") { UseShellExecute = true });
         }
         catch
         {

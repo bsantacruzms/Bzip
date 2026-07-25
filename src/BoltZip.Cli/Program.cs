@@ -478,7 +478,7 @@ internal static class Program
             Encryption (.bz): XChaCha20-Poly1305 with Argon2id key derivation.
             Compression is auto-tuned to your CPU, RAM and storage. Run 'bz hw' to preview.
 
-            Created by Brian Santacruz - briansantacruz.com
+            BoltZip, free and open source: https://github.com/bsantacruzms/Bzip
             """);
         return 0;
     }

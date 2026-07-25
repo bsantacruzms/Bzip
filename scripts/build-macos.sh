@@ -49,7 +49,7 @@ for RID in osx-arm64 osx-x64; do
 <dict>
     <key>CFBundleName</key><string>BoltZip</string>
     <key>CFBundleDisplayName</key><string>BoltZip</string>
-    <key>CFBundleIdentifier</key><string>com.briansantacruz.boltzip</string>
+    <key>CFBundleIdentifier</key><string>com.boltzip.app</string>
     <key>CFBundleVersion</key><string>$VERSION</string>
     <key>CFBundleShortVersionString</key><string>$VERSION</string>
     <key>CFBundleExecutable</key><string>BoltZipTool</string>
@@ -65,7 +65,7 @@ for RID in osx-arm64 osx-x64; do
             <key>LSHandlerRank</key><string>Owner</string>
             <key>CFBundleTypeIconFile</key><string>boltzip</string>
             <key>LSItemContentTypes</key>
-            <array><string>com.briansantacruz.boltzip.archive</string></array>
+            <array><string>com.boltzip.app.archive</string></array>
             <key>CFBundleTypeExtensions</key>
             <array><string>bz</string></array>
         </dict>
@@ -87,7 +87,7 @@ for RID in osx-arm64 osx-x64; do
     <key>UTExportedTypeDeclarations</key>
     <array>
         <dict>
-            <key>UTTypeIdentifier</key><string>com.briansantacruz.boltzip.archive</string>
+            <key>UTTypeIdentifier</key><string>com.boltzip.app.archive</string>
             <key>UTTypeDescription</key><string>BoltZip Archive</string>
             <key>UTTypeIconFile</key><string>boltzip</string>
             <key>UTTypeConformsTo</key>

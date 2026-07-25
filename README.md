@@ -1,10 +1,10 @@
 # ⚡ BoltZip
 
-**A modern, open-source archiver — a spiritual successor to 7‑Zip, rebuilt on .NET 8 with
+**A modern, open-source archiver, a spiritual successor to 7‑Zip, rebuilt on .NET 8 with
 automatic hardware optimization and a fast, authenticated‑encryption native format.**
 
-BoltZip looks at *your* machine — CPU cores, RAM, storage type (NVMe/SSD/HDD/network), AES and
-SIMD support — and auto‑tunes every compression job. No other mainstream archiver does this.
+BoltZip looks at *your* machine, CPU cores, RAM, storage type (NVMe/SSD/HDD/network), AES and
+SIMD support, and auto‑tunes every compression job. No other mainstream archiver does this.
 
 📊 **[Live showcase &amp; benchmarks →](https://bsantacruzms.github.io/Bzip/)**
 
@@ -12,17 +12,17 @@ SIMD support — and auto‑tunes every compression job. No other mainstream arc
 
 ## Why BoltZip is different
 
-- 🧠 **Automatic hardware optimization** — threads, match‑window size, I/O buffers, long‑distance
+- 🧠 **Automatic hardware optimization**, threads, match‑window size, I/O buffers, long‑distance
   matching and codec level are chosen for your exact hardware, per job. And it **tells you why**.
-- 🔒 **Modern authenticated encryption** — the native `.bz` format uses **XChaCha20‑Poly1305**
+- 🔒 **Modern authenticated encryption**, the native `.bz` format uses **XChaCha20‑Poly1305**
   (AEAD) with **Argon2id** key derivation. Tampering and wrong passwords fail loudly instead of
   silently producing garbage.
-- ⚡ **Fast modern codec** — `.bz` is built on **Zstandard**, which beats classic Deflate/LZMA on
+- ⚡ **Fast modern codec**, `.bz` is built on **Zstandard**, which beats classic Deflate/LZMA on
   the speed‑vs‑ratio curve and scales across cores.
 - 🆓 **Free, open source, no ads, no nag screens.**
-- 📦 **Portable** — single‑file executables, nothing to install.
-- 🖥️ **Three ways to use it** — a modern desktop app, a `bz` CLI, and Windows right‑click.
-- 🌍 **Cross‑platform core** — Windows today; macOS and Linux in progress.
+- 📦 **Portable**, single‑file executables, nothing to install.
+- 🖥️ **Three ways to use it**, a modern desktop app, a `bz` CLI, and Windows right‑click.
+- 🌍 **Cross‑platform core**, Windows today; macOS and Linux in progress.
 
 ## Comparison
 
@@ -77,25 +77,25 @@ Real numbers on a 100 MB mixed dataset (~50% text, 25% CSV, 25% incompressible),
 Medians of three warmed runs. BoltZip's `.bz` now compresses on **all CPU cores** (independent
 Zstandard frames), so in the native-format comparison it was **~2× faster than 7-Zip's `.7z`** and
 slightly smaller on this dataset. For plain `.zip` creation, 7-Zip and Windows are still fastest
-(single-threaded Deflate) — BoltZip's edge is its multi-core native format, not every workload.
+(single-threaded Deflate), BoltZip's edge is its multi-core native format, not every workload.
 Reproduce it with `pwsh scripts/benchmark.ps1`. (7-Zip 18.01; WinRAR/WinZip weren't installed, so
 they're in the feature table above but not timed.)
 
 ## Install
 
-**Windows** — download from the [Releases](https://github.com/bsantacruzms/Bzip/releases) page:
+**Windows**, download from the [Releases](https://github.com/bsantacruzms/Bzip/releases) page:
 
-- **`BoltZip-<version>.msi`** — installer. Adds the app + `bz` CLI, a Start‑menu entry, and a
+- **`BoltZip-<version>.msi`**, installer. Adds the app + `bz` CLI, a Start‑menu entry, and a
   cascading **“BoltZip”** right‑click menu (Add to archive / Extract) in Explorer. The setup wizard
-  also has a checkbox (on by default) to **associate archives** — `.bz`, `.zip`, `.7z`, `.rar`,
-  `.tar`, `.gz`, `.zst`, `.xz` and more — so double‑clicking one opens it in BoltZip.
-- **`BoltZipTool-<version>-portable.exe`** — the desktop app, no install (no system changes).
-- **`bz-<version>-portable.exe`** — the CLI.
+  also has a checkbox (on by default) to **associate archives**, `.bz`, `.zip`, `.7z`, `.rar`,
+  `.tar`, `.gz`, `.zst`, `.xz` and more, so double‑clicking one opens it in BoltZip.
+- **`BoltZipTool-<version>-portable.exe`**, the desktop app, no install (no system changes).
+- **`bz-<version>-portable.exe`**, the CLI.
 
-**macOS** — `BoltZip-<version>-<arch>.dmg` (drag to Applications). The app declares the archive types
+**macOS**, `BoltZip-<version>-<arch>.dmg` (drag to Applications). The app declares the archive types
 it can open, so they list BoltZip under **Finder → Open With** (pick *Change All…* to make it the default).
 
-**Linux** — install the package for your distro, or use the portable tarball:
+**Linux**, install the package for your distro, or use the portable tarball:
 
 ```bash
 # Debian / Ubuntu
@@ -177,8 +177,8 @@ If you'd like to support development, tips are appreciated:
 
 ## License
 
-Free and open source under the [MIT license](LICENSE) — use it, study it, and build on it.
+Free and open source under the [MIT license](LICENSE), use it, study it, and build on it.
 
 ---
 
-Created by Brian Santacruz — [briansantacruz.com](https://briansantacruz.com)
+BoltZip is free and open source. [View it on GitHub](https://github.com/bsantacruzms/Bzip).

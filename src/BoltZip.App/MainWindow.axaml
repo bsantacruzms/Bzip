@@ -60,7 +60,7 @@
                                     </WrapPanel>
                                     <Grid ColumnDefinitions="90,*" Margin="0,6,0,0">
                                         <TextBlock Text="Password" VerticalAlignment="Center" />
-                                        <TextBox x:Name="PasswordBox" Grid.Column="1" PasswordChar="&#x25CF;" Watermark="Optional &#x2014; .bz only" />
+                                        <TextBox x:Name="PasswordBox" Grid.Column="1" PasswordChar="&#x25CF;" Watermark="Optional, .bz only" />
                                     </Grid>
                                     <Grid ColumnDefinitions="90,*,Auto">
                                         <TextBlock Text="Output" VerticalAlignment="Center" />
@@ -135,7 +135,7 @@
                             <Border Classes="card">
                                 <StackPanel Spacing="6">
                                     <TextBlock Classes="h2" Text="About" />
-                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.0.0 &#x2014; modern, hardware-optimized archiver." />
+                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.0.0, modern, hardware-optimized archiver." />
                                     <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="Native .bz format: Zstandard + XChaCha20-Poly1305 + Argon2id." />
                                 </StackPanel>
                             </Border>
@@ -153,8 +153,8 @@
 
             <!-- Footer -->
             <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,12,0,0">
-                <TextBlock Text="Created by Brian Santacruz &#x2014; " Foreground="{DynamicResource BoltSubtleBrush}" FontSize="12" />
-                <TextBlock x:Name="WebsiteLink" Text="briansantacruz.com" Foreground="{DynamicResource BoltAccentBrush}"
+                <TextBlock Text="BoltZip, free and open source, " Foreground="{DynamicResource BoltSubtleBrush}" FontSize="12" />
+                <TextBlock x:Name="WebsiteLink" Text="View on GitHub" Foreground="{DynamicResource BoltAccentBrush}"
                            FontSize="12" TextDecorations="Underline" PointerPressed="OnOpenWebsite" />
             </StackPanel>
         </Grid>
