@@ -111,4 +111,50 @@ public class BzArchiveTests
 
         Assert.Equal("just one file", File.ReadAllText(System.IO.Path.Combine(outDir, "note.txt")));
     }
+
+    [Fact]
+    public async Task RoundTrip_LargeInput_ParallelPath_PlainAndEncrypted()
+    {
+        using var ws = new TempWorkspace();
+
+        // > 4 MiB total so the multi-core block path runs, with mixed content:
+        // compressible text, incompressible random, an empty file, and a tiny trailing file.
+        var text = string.Concat(Enumerable.Repeat("The quick brown fox jumps over the lazy dog. ", 200_000));
+        ws.WriteFile("big/text.log", text);
+
+        var rand = new byte[4 * 1024 * 1024];
+        new Random(12345).NextBytes(rand);
+        ws.WriteFile("big/rand.bin", rand);
+
+        ws.WriteFile("big/empty.dat", Array.Empty<byte>());
+        ws.WriteFile("big/tiny.txt", "tail");
+
+        var srcDir = ws.Path("big");
+        var expected = HashDir(srcDir);
+
+        foreach (var password in new string?[] { null, Password })
+        {
+            var archive = ws.Path((password is null ? "plain" : "enc") + ".bz");
+            await BzArchive.CreateAsync(archive, new[] { srcDir }, password, TestPlans.For(ArchiveFormat.Bz));
+
+            var outDir = ws.CreateDir(password is null ? "outp" : "oute");
+            await BzArchive.ExtractAsync(archive, outDir, password, overwrite: true);
+
+            var actual = HashDir(System.IO.Path.Combine(outDir, "big"));
+            Assert.Equal(expected, actual);
+        }
+    }
+
+    private static Dictionary<string, string> HashDir(string dir)
+    {
+        var map = new Dictionary<string, string>();
+        foreach (var file in Directory.EnumerateFiles(dir, "*", SearchOption.AllDirectories))
+        {
+            var rel = System.IO.Path.GetRelativePath(dir, file).Replace('\\', '/');
+            using var fs = File.OpenRead(file);
+            map[rel] = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+        }
+
+        return map;
+    }
 }

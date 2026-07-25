@@ -26,6 +26,14 @@ public sealed class TempWorkspace : IDisposable
         return path;
     }
 
+    public string WriteFile(string relativePath, byte[] content)
+    {
+        var path = System.IO.Path.Combine(Root, relativePath);
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+        File.WriteAllBytes(path, content);
+        return path;
+    }
+
     public string Path(string relative) => System.IO.Path.Combine(Root, relative);
 
     public void Dispose()

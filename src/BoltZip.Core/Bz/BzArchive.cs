@@ -113,34 +113,62 @@ public static class BzArchive
 
         progress?.Report(new ArchiveProgress(ArchivePhase.Compressing, null, 0, totalBytes, 0, entriesTotal));
 
-        var buffer = new byte[Math.Max(64 * 1024, plan.BufferBytes)];
         long processed = 0;
-        var entriesDone = 0;
 
-        var compressor = new CompressionStream(sink, plan.Level, bufferSize: plan.BufferBytes);
-        try
+        var fileRefs = items
+            .Where(i => !i.Entry.IsDirectory)
+            .Select(i => new ParallelBlockCompressor.FileRef(i.FullPath!, i.Entry.Path, i.Entry.Size))
+            .ToList();
+
+        var workers = Math.Max(1, plan.WorkerThreads);
+        var blockSize = ChooseBlockSize(totalBytes, workers);
+
+        if (workers > 1 && totalBytes > (long)blockSize * 2)
         {
-            ApplyCompressionParameters(compressor, plan);
-
-            foreach (var item in items)
-            {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                if (item.Entry.IsDirectory)
+            // Multi-core path: compress independent Zstandard frames across all workers.
+            // Concatenated frames decompress as one stream, so the format is unchanged.
+            processed = ParallelBlockCompressor.Compress(
+                sink, fileRefs, plan, workers, blockSize,
+                (done, entry) =>
                 {
-                    entriesDone++;
-                    continue;
-                }
-
-                processed = await PumpFileAsync(
-                    item.FullPath!, compressor, buffer, processed, totalBytes,
-                    entriesDone, entriesTotal, item.Entry.Path, progress, cancellationToken);
-                entriesDone++;
-            }
+                    var entriesApprox = totalBytes > 0
+                        ? (int)Math.Min(entriesTotal, done * entriesTotal / totalBytes)
+                        : entriesTotal;
+                    progress?.Report(new ArchiveProgress(
+                        ArchivePhase.Compressing, entry, done, totalBytes, entriesApprox, entriesTotal));
+                },
+                cancellationToken);
         }
-        finally
+        else
         {
-            compressor.Dispose();
+            // Single-frame streaming path (small inputs / single worker) keeps the best ratio.
+            var buffer = new byte[Math.Max(64 * 1024, plan.BufferBytes)];
+            var compressor = new CompressionStream(sink, plan.Level, bufferSize: plan.BufferBytes);
+            try
+            {
+                ApplyCompressionParameters(compressor, plan);
+
+                var entriesDone = 0;
+                foreach (var item in items)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                    if (item.Entry.IsDirectory)
+                    {
+                        entriesDone++;
+                        continue;
+                    }
+
+                    processed = await PumpFileAsync(
+                        item.FullPath!, compressor, buffer, processed, totalBytes,
+                        entriesDone, entriesTotal, item.Entry.Path, progress, cancellationToken);
+                    entriesDone++;
+                }
+            }
+            finally
+            {
+                compressor.Dispose();
+            }
         }
 
         aead?.CompleteFinal();
@@ -433,6 +461,20 @@ public static class BzArchive
         }
 
         return processed;
+    }
+
+    private static int ChooseBlockSize(long totalBytes, int workers)
+    {
+        const long MiB = 1024 * 1024;
+        if (totalBytes <= 0)
+        {
+            return (int)(2 * MiB);
+        }
+
+        // Aim for ~2 blocks per worker so cores stay busy, while keeping blocks large
+        // enough that per-block compression ratio stays close to a single solid stream.
+        var target = totalBytes / (Math.Max(1, workers) * 2L);
+        return (int)Math.Clamp(target, 2 * MiB, 8 * MiB);
     }
 
     private static void ApplyCompressionParameters(CompressionStream compressor, CompressionPlan plan)
