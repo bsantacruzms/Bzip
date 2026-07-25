@@ -15,7 +15,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 VERSION="$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props | head -n1 || true)"
-VERSION="${VERSION:-0.1.0}"
+VERSION="${VERSION:-1.0.0}"
 MAINTAINER="Brian Santacruz <bsantacruzms@users.noreply.github.com>"
 URL="https://github.com/bsantacruzms/Bzip"
 DESC="Modern, hardware-optimized archiver with a fast authenticated-encryption format."

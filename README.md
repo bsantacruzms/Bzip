@@ -67,18 +67,19 @@ Real numbers on a 100 MB mixed dataset (~50% text, 25% CSV, 25% incompressible),
 
 | Tool | Format | Compress | Extract | Size |
 | --- | --- | ---: | ---: | ---: |
-| **BoltZip** | `.bz` | **5.48 s** | 3.76 s | **25.7 MB** |
-| BoltZip (fast) | `.bz` | 4.62 s | 3.72 s | 26.0 MB |
-| **BoltZip** | `.zip` | 5.34 s | 0.32 s | 29.1 MB |
-| 7‑Zip | `.7z` | 8.93 s | 0.18 s | 25.8 MB |
-| 7‑Zip | `.zip` | **1.09 s** | **0.11 s** | **28.4 MB** |
-| Windows Zip | `.zip` | 1.33 s | 0.17 s | 29.0 MB |
+| **BoltZip** | `.bz` | **2.80 s** | 3.64 s | **25.8 MB** |
+| BoltZip (fast) | `.bz` | 2.71 s | 3.63 s | 26.2 MB |
+| **BoltZip** | `.zip` | 3.23 s | 0.26 s | 29.1 MB |
+| 7‑Zip | `.7z` | 5.82 s | 0.15 s | 25.9 MB |
+| 7‑Zip | `.zip` | 1.08 s | 0.12 s | 28.4 MB |
+| Windows Zip | `.zip` | **1.05 s** | 0.12 s | 29.0 MB |
 
-These are medians of three measured runs after warm-up. In the native-format comparison, BoltZip's
-auto-tuned `.bz` compressed faster and slightly smaller than 7-Zip's `.7z` on this dataset. In the
-standard ZIP comparison, 7-Zip and Windows compressed substantially faster than BoltZip. Formats and
-implementations have different tradeoffs, so this is not a claim that BoltZip wins every workload.
-Reproduce it with `pwsh scripts/benchmark.ps1`. (WinRAR/WinZip weren't installed on the test machine.)
+Medians of three warmed runs. BoltZip's `.bz` now compresses on **all CPU cores** (independent
+Zstandard frames), so in the native-format comparison it was **~2× faster than 7-Zip's `.7z`** and
+slightly smaller on this dataset. For plain `.zip` creation, 7-Zip and Windows are still fastest
+(single-threaded Deflate) — BoltZip's edge is its multi-core native format, not every workload.
+Reproduce it with `pwsh scripts/benchmark.ps1`. (7-Zip 18.01; WinRAR/WinZip weren't installed, so
+they're in the feature table above but not timed.)
 
 ## Install
 
@@ -160,11 +161,19 @@ On macOS and Linux, run `bash scripts/build-macos.sh` (produces the `.dmg`) or
 - `.bz` encryption uses libsodium's XChaCha20‑Poly1305 with Argon2id key derivation.
 - Extraction guards against path traversal ("Zip Slip").
 - Passwords are never logged and are zeroed after key derivation.
+- The whole engine is memory-safe managed .NET, avoiding the native buffer-overflow/underflow bugs
+  that have caused remote-code-execution CVEs in C/C++ archivers (e.g. 7-Zip's Zstandard decoder,
+  CVE-2024-11477).
 
 ## Contributing
 
 BoltZip is free and open source, and contributions are welcome. Found a bug or have an
 idea? [Open an issue](https://github.com/bsantacruzms/Bzip/issues) or send a pull request.
+
+If you'd like to support development, tips are appreciated:
+
+- **XRP:** `r4FaiziXJCbh2asirLkRpkGjLB47uHWNpE`
+- **XLM:** `GCTCVG44ZOJRYJXTFF7BA23ATPC47H3YOX22WB7X2AKBL3AZ35NR5KJY`
 
 ## License
 

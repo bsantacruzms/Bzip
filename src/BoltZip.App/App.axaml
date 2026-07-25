@@ -1,7 +1,7 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="BoltZip.App.App"
-             RequestedThemeVariant="Dark">
+             RequestedThemeVariant="Light">
 
     <Application.Resources>
         <ResourceDictionary>
@@ -14,8 +14,8 @@
             <Color x:Key="SystemAccentColorLight2">#FFD37A</Color>
             <Color x:Key="SystemAccentColorLight3">#FFE3AC</Color>
 
-            <SolidColorBrush x:Key="BoltAccentBrush" Color="#FFB020" />
-            <SolidColorBrush x:Key="BoltSubtleBrush" Color="#9AA0A6" />
+            <SolidColorBrush x:Key="BoltAccentBrush" Color="#C8860D" />
+            <SolidColorBrush x:Key="BoltSubtleBrush" Color="#5C6270" />
         </ResourceDictionary>
     </Application.Resources>
 
@@ -23,11 +23,12 @@
         <FluentTheme />
 
         <Style Selector="Border.card">
-            <Setter Property="Background" Value="#26262F" />
+            <Setter Property="Background" Value="#FFFFFF" />
             <Setter Property="CornerRadius" Value="10" />
             <Setter Property="Padding" Value="18" />
-            <Setter Property="BorderBrush" Value="#2E2E3A" />
+            <Setter Property="BorderBrush" Value="#E4E4EA" />
             <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BoxShadow" Value="0 1 4 0 #12000000" />
         </Style>
 
         <Style Selector="TextBlock.h2">
@@ -36,7 +37,12 @@
         </Style>
 
         <Style Selector="TextBlock.label">
-            <Setter Property="Foreground" Value="#B0B4BA" />
+            <Setter Property="Foreground" Value="#5C6270" />
+        </Style>
+
+        <Style Selector="Button.accent">
+            <Setter Property="Foreground" Value="#241A00" />
+            <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
     </Application.Styles>
 </Application>

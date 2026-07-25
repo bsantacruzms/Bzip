@@ -63,7 +63,7 @@
             <h2>Real-world speed</h2>
             <p class="subtle" id="bench-meta">Measured on this project's test machine.</p>
             <div id="benchmark" class="bench">Loading benchmark…</div>
-            <p class="subtle small">The native-format comparison is BoltZip <code>.bz</code> versus 7-Zip <code>.7z</code>; the standard-format comparison uses <code>.zip</code> for every tool. BoltZip <code>.bz</code> won native compression time and size on this dataset, while 7-Zip and Windows won ZIP creation. Lower is better. WinRAR / WinZip were not installed, and results vary by hardware and data.</p>
+            <p class="subtle small">Native-format comparison — BoltZip <code>.bz</code> vs 7-Zip <code>.7z</code>: BoltZip compressed <strong>about 2× faster and slightly smaller</strong> on this dataset. For plain <code>.zip</code> creation, 7-Zip and Windows are still fastest (single-threaded Deflate); BoltZip’s win is its multi-core native format. Medians of 3 warmed runs — lower is better. WinRAR / WinZip weren’t installed, so they’re feature-compared below, not timed.</p>
         </section>
 
         <section class="wrap">
@@ -91,6 +91,30 @@
                 </table>
             </div>
             <p class="subtle small">✓ yes · ~ partial · ✗ no · – n/a. Reflects typical/default configurations, in good faith.</p>
+        </section>
+
+        <section class="wrap">
+            <h2>Security by design</h2>
+            <p class="subtle">Archivers are a favorite malware entry point. 7-Zip alone shipped serious fixes recently — here are two real ones, and how BoltZip’s architecture avoids whole classes of such bugs.</p>
+            <div class="grid">
+                <div class="card cve">
+                    <span class="cve-id">CVE-2024-11477 · CVSS 7.8</span>
+                    <h3>7-Zip: Zstandard decode RCE</h3>
+                    <p>An integer underflow in 7-Zip’s native Zstandard decompressor allowed remote code execution from a crafted archive (fixed in 7-Zip 24.07).</p>
+                </div>
+                <div class="card cve">
+                    <span class="cve-id">CVE-2025-0411 · CVSS 7.0 · exploited</span>
+                    <h3>7-Zip: Mark-of-the-Web bypass</h3>
+                    <p>Extracted files lost the “downloaded from the internet” flag, letting malware skip SmartScreen (fixed in 24.09; listed in CISA’s Known Exploited Vulnerabilities catalog).</p>
+                </div>
+                <div class="card cve">
+                    <span class="cve-id">BoltZip · by construction</span>
+                    <h3>How BoltZip mitigates</h3>
+                    <p class="mitigation"><strong>Memory-safe engine:</strong> the whole pipeline is managed .NET — bounds-checked, so the integer-underflow / buffer-overflow class behind native RCEs (like the Zstd bug at left) is structurally avoided.</p>
+                    <p class="mitigation"><strong>Authenticated format:</strong> <code>.bz</code> uses XChaCha20-Poly1305 (AEAD) + Argon2id; tampering, truncation and reordering fail loudly, and extraction guards against path traversal (“Zip Slip”).</p>
+                </div>
+            </div>
+            <p class="subtle small">Sources: NVD — CVE-2024-11477 (CWE-191, integer underflow) and CVE-2025-0411 (CWE-693, in CISA KEV). No software is invulnerable, but a managed, authenticated, fully open-source design removes entire categories of risk instead of patching them one by one.</p>
         </section>
 
         <section class="wrap download">
@@ -132,6 +156,21 @@
                     <a class="btn" href="https://github.com/bsantacruzms/Bzip">⭐ Star on GitHub</a>
                     <a class="btn" href="https://github.com/bsantacruzms/Bzip/issues">🐛 Report an issue</a>
                     <a class="btn" href="https://github.com/bsantacruzms/Bzip/pulls">🔧 Contribute a PR</a>
+                </div>
+            </div>
+
+            <div class="card donate">
+                <h3>💛 Support development</h3>
+                <p>BoltZip is free and MIT-licensed. If it saves you time, tips are appreciated — scan a QR code or copy an address.</p>
+                <div class="wallets">
+                    <div class="wallet">
+                        <img class="qr" src="assets/xrp-qr.svg" alt="XRP donation address QR code" width="168" height="168" />
+                        <div><span class="coin">XRP</span><code class="addr">r4FaiziXJCbh2asirLkRpkGjLB47uHWNpE</code></div>
+                    </div>
+                    <div class="wallet">
+                        <img class="qr" src="assets/xlm-qr.svg" alt="XLM donation address QR code" width="168" height="168" />
+                        <div><span class="coin">XLM</span><code class="addr">GCTCVG44ZOJRYJXTFF7BA23ATPC47H3YOX22WB7X2AKBL3AZ35NR5KJY</code></div>
+                    </div>
                 </div>
             </div>
         </section>

@@ -5,53 +5,53 @@
     "datasetDescription":  "~50% text/logs, 25% CSV, 25% incompressible binary",
     "iterations":  3,
     "statistic":  "median",
-    "date":  "2026-07-19",
+    "date":  "2026-07-25",
     "results":  [
                     {
                         "tool":  "BoltZip",
                         "format":  ".bz",
-                        "compressSec":  5.48,
-                        "extractSec":  3.76,
-                        "sizeMB":  25.7,
-                        "ratioPct":  25.7
+                        "compressSec":  2.8,
+                        "extractSec":  3.64,
+                        "sizeMB":  25.8,
+                        "ratioPct":  25.8
                     },
                     {
                         "tool":  "BoltZip (fast)",
                         "format":  ".bz",
-                        "compressSec":  4.62,
-                        "extractSec":  3.72,
-                        "sizeMB":  26,
-                        "ratioPct":  26
+                        "compressSec":  2.71,
+                        "extractSec":  3.63,
+                        "sizeMB":  26.2,
+                        "ratioPct":  26.2
                     },
                     {
                         "tool":  "BoltZip",
                         "format":  ".zip",
-                        "compressSec":  5.34,
-                        "extractSec":  0.32,
+                        "compressSec":  3.23,
+                        "extractSec":  0.26,
                         "sizeMB":  29.1,
                         "ratioPct":  29.1
                     },
                     {
                         "tool":  "7-Zip",
                         "format":  ".7z",
-                        "compressSec":  8.93,
-                        "extractSec":  0.18,
-                        "sizeMB":  25.8,
-                        "ratioPct":  25.8
+                        "compressSec":  5.82,
+                        "extractSec":  0.15,
+                        "sizeMB":  25.9,
+                        "ratioPct":  25.9
                     },
                     {
                         "tool":  "7-Zip",
                         "format":  ".zip",
-                        "compressSec":  1.09,
-                        "extractSec":  0.11,
+                        "compressSec":  1.08,
+                        "extractSec":  0.12,
                         "sizeMB":  28.4,
                         "ratioPct":  28.4
                     },
                     {
                         "tool":  "Windows Zip",
                         "format":  ".zip",
-                        "compressSec":  1.33,
-                        "extractSec":  0.17,
+                        "compressSec":  1.05,
+                        "extractSec":  0.12,
                         "sizeMB":  29,
                         "ratioPct":  29
                     }

@@ -22,7 +22,7 @@ jobs:
           dotnet tool install --global wix --version 5.0.2
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix extension add -g WixToolset.UI.wixext/5.0.2
-          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -o dist/BoltZip-0.1.0.msi
+          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -o dist/BoltZip-1.0.0.msi
       - name: Publish Windows artifacts
         uses: softprops/action-gh-release@v2
         with:
