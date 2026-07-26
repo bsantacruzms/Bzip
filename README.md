@@ -85,10 +85,12 @@ they're in the feature table above but not timed.)
 
 **Windows**, download from the [Releases](https://github.com/bsantacruzms/Bzip/releases) page:
 
-- **`BoltZip-<version>.msi`**, installer. Adds the app + `bz` CLI, a Start‑menu entry, and a
-  cascading **“BoltZip”** right‑click menu (Add to archive / Extract) in Explorer. The setup wizard
-  also has a checkbox (on by default) to **associate archives**, `.bz`, `.zip`, `.7z`, `.rar`,
-  `.tar`, `.gz`, `.zst`, `.xz` and more, so double‑clicking one opens it in BoltZip.
+- **`BoltZip-<version>-setup.exe`**, the recommended installer (carries the BoltZip icon). Adds the
+  app + `bz` CLI, a Start‑menu entry, a cascading **“BoltZip”** right‑click menu (Add to archive /
+  Extract) in Explorer, and file associations so double‑clicking `.bz`, `.zip`, `.7z`, `.rar`,
+  `.tar`, `.gz`, `.zst`, `.xz` and more opens them in BoltZip.
+- **`BoltZip-<version>.msi`**, the same installer as a raw MSI (its wizard lets you opt out of the
+  file associations).
 - **`BoltZipTool-<version>-portable.exe`**, the desktop app, no install (no system changes).
 - **`bz-<version>-portable.exe`**, the CLI.
 

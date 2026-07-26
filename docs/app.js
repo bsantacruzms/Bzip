@@ -53,6 +53,7 @@ function render(d) {
 
     // Button id -> matcher over the release asset file name.
     var MAP = {
+        'dl-win-setup': function (n) { return /-setup\.exe$/i.test(n); },
         'dl-win-msi': function (n) { return /\.msi$/i.test(n); },
         'dl-win-exe': function (n) { return /^BoltZipTool-.*\.exe$/i.test(n); },
         'dl-win-cli': function (n) { return /^bz-.*\.exe$/i.test(n); },
@@ -80,7 +81,7 @@ function render(d) {
         var os = detectOs();
         var label = { win: 'Windows', mac: 'macOS', linux: 'Linux' }[os];
         var match = {
-            win: function (n) { return /\.msi$/i.test(n); },
+            win: function (n) { return /-setup\.exe$/i.test(n); },
             mac: function (n) { return /arm64\.dmg$/i.test(n) || /\.dmg$/i.test(n); },
             linux: function (n) { return /amd64\.deb$/i.test(n) || /linux-x64\.tar\.gz$/i.test(n); }
         }[os];

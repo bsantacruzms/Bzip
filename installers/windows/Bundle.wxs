@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  BoltZip installer bootstrapper (WiX Burn). Produces a branded setup .exe that carries the
+  BoltZip icon (an .msi file cannot have a custom Explorer icon) and chains the MSI.
+  Build:  wix build installers/windows/Bundle.wxs -ext WixToolset.Bal.wixext -ext WixToolset.UI.wixext -o dist/BoltZip-<version>-setup.exe
+-->
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:bal="http://wixtoolset.org/schemas/v4/wxs/bal">
+  <Bundle Name="BoltZip"
+          Manufacturer="BoltZip"
+          Version="1.0.2.0"
+          UpgradeCode="B7E2A1F4-9C3D-4E5A-8B6F-1D2C3E4F5A6B"
+          IconSourceFile="$(sys.SOURCEFILEDIR)..\..\src\BoltZip.App\Assets\boltzip.ico"
+          AboutUrl="https://github.com/bsantacruzms/Bzip">
+
+    <BootstrapperApplication>
+      <bal:WixStandardBootstrapperApplication
+        Theme="hyperlinkLicense"
+        LicenseUrl="https://github.com/bsantacruzms/Bzip/blob/main/LICENSE"
+        LogoFile="$(sys.SOURCEFILEDIR)..\..\src\BoltZip.App\Assets\boltzip.png"
+        SuppressOptionsUI="yes" />
+    </BootstrapperApplication>
+
+    <Chain>
+      <!-- Installs the app, CLI, Start-menu entry, PATH, right-click menu and file associations. -->
+      <MsiPackage SourceFile="$(sys.SOURCEFILEDIR)..\..\dist\BoltZip-1.0.2.msi" Vital="yes" />
+    </Chain>
+  </Bundle>
+</Wix>
