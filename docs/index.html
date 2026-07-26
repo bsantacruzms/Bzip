@@ -150,11 +150,13 @@
                 <div class="card dl-card">
                     <h3>🍎 macOS</h3>
                     <p>A <code>.dmg</code> drag-to-Applications build. Archives open with BoltZip from Finder’s “Open With”.</p>
+                    <p class="subtle small">Easiest install, handles Apple's first-launch block for you:</p>
+                    <pre><code>curl -fsSL https://bsantacruzms.github.io/Bzip/install-mac.sh | bash</code></pre>
                     <a class="btn primary dl-primary" id="dl-mac-arm" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download for macOS (Apple Silicon)</a>
                     <div class="dl-links">
                         <a class="btn" id="dl-mac-x64" href="https://github.com/bsantacruzms/Bzip/releases/latest">Intel Mac (.dmg)</a>
                     </div>
-                    <p class="subtle small">First launch: <strong>right-click BoltZip in Applications and choose Open</strong>, then confirm. Needed once, because the app is not signed with a paid Apple Developer ID. The disk image includes these steps too.</p>
+                    <p class="subtle small">Installing the <code>.dmg</code> by hand? macOS blocks non-notarized apps, so afterwards run <code>xattr -dr com.apple.quarantine /Applications/BoltZip.app</code>, or allow it in <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>.</p>
                 </div>
                 <div class="card dl-card">
                     <h3>🐧 Linux</h3>

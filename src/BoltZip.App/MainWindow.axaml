@@ -183,7 +183,7 @@
                             <Border Classes="card">
                                 <StackPanel Spacing="6">
                                     <TextBlock Classes="h2" Text="About" />
-                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.1.3, modern, hardware-optimized archiver." />
+                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.1.4, modern, hardware-optimized archiver." />
                                     <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="Native .bz format: Zstandard + XChaCha20-Poly1305 + Argon2id." />
                                 </StackPanel>
                             </Border>

@@ -12,7 +12,7 @@ param(
     [int]$SizeMB = 120,
     [ValidateRange(1, 9)]
     [int]$Iterations = 3,
-    [string]$Bz = "$PSScriptRoot\..\dist\bz-1.1.3-portable.exe",
+    [string]$Bz = "$PSScriptRoot\..\dist\bz-1.1.4-portable.exe",
     [string]$SevenZip = "C:\Program Files\7-Zip\7z.exe",
     [string]$OutJson = "$PSScriptRoot\..\docs\assets\benchmark-media.json"
 )

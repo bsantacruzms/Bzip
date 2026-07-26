@@ -129,17 +129,24 @@ which changes quality; BoltZip keeps files bit-for-bit identical.
 > (Get-FileHash .\BoltZip-<version>-setup.exe -Algorithm SHA256).Hash
 > ```
 
-**macOS**, `BoltZip-<version>-<arch>.dmg` (drag to Applications). Pick the **Apple Silicon** build for
-M‑series Macs and the **x64** build for Intel Macs. The app declares the archive types it can open, so
-they list BoltZip under **Finder → Open With** (pick *Change All…* to make it the default).
+**macOS**, the simplest install is one command, which downloads, verifies and installs the right
+build and clears Apple's download block for you:
 
-> **First launch on macOS:** right‑click (or Control‑click) BoltZip in Applications and choose
-> **Open**, then confirm. This is needed once, because BoltZip is not signed with a paid Apple
-> Developer ID. If macOS says the app is *damaged*, you have a build older than 1.1.3, download the
-> current release. To clear a stale quarantine flag:
+```bash
+curl -fsSL https://bsantacruzms.github.io/Bzip/install-mac.sh | bash
+```
+
+Or take the `.dmg` (Apple Silicon or Intel) and drag BoltZip to Applications. The app declares the
+archive types it can open, so they list BoltZip under **Finder → Open With** (pick *Change All…*).
+
+> **macOS blocks the app on first launch** (“cannot be opened” / “could not be verified”) because
+> BoltZip is not notarized, which needs a paid Apple Developer account. The one-line installer above
+> handles it. After a manual `.dmg` install, clear the flag yourself:
 > ```bash
 > xattr -dr com.apple.quarantine /Applications/BoltZip.app
 > ```
+> Or go to **System Settings → Privacy & Security**, scroll to Security, and click **Open Anyway**.
+> On recent macOS, Control-clicking the app and choosing *Open* no longer bypasses this.
 
 **Linux**, one command installs the right package for your system:
 

@@ -22,14 +22,14 @@ jobs:
           dotnet tool install --global wix --version 5.0.2
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix extension add -g WixToolset.UI.wixext/5.0.2
-          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -o dist/BoltZip-1.1.3.msi
+          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -o dist/BoltZip-1.1.4.msi
       - name: Build branded setup.exe (bootstrapper)
         shell: pwsh
         continue-on-error: true
         run: |
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix extension add -g WixToolset.BootstrapperApplications.wixext/5.0.2
-          wix build installers/windows/Bundle.wxs -ext WixToolset.BootstrapperApplications.wixext -o dist/BoltZip-1.1.3-setup.exe
+          wix build installers/windows/Bundle.wxs -ext WixToolset.BootstrapperApplications.wixext -o dist/BoltZip-1.1.4-setup.exe
       - name: Publish Windows artifacts
         uses: softprops/action-gh-release@v2
         with:

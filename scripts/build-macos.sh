@@ -5,7 +5,7 @@
 #
 set -euo pipefail
 
-VERSION="1.1.3"
+VERSION="1.1.4"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 mkdir -p dist
@@ -110,22 +110,30 @@ PLIST
 Opening BoltZip for the first time
 ==================================
 
+BoltZip is free and open source and is not notarized by Apple (that needs a paid
+Apple Developer account), so macOS blocks it until you allow it once.
+
+EASIEST: run this one line in Terminal instead of using this disk image. It downloads,
+verifies and installs BoltZip, and clears the block for you:
+
+    curl -fsSL https://bsantacruzms.github.io/Bzip/install-mac.sh | bash
+
+IF YOU INSTALLED FROM THIS DISK IMAGE:
+
 1. Drag BoltZip to the Applications folder.
-2. In Applications, RIGHT-CLICK (or Control-click) BoltZip and choose "Open".
-3. Click "Open" in the dialog that appears.
+2. Open Terminal and run:
 
-You only need to do this once. Afterwards BoltZip opens normally.
+       xattr -dr com.apple.quarantine /Applications/BoltZip.app
 
-Why is this necessary?
-BoltZip is free and open source and is not signed with a paid Apple Developer ID,
-so macOS asks you to confirm the first launch. Double-clicking the app the first
-time shows a warning instead of opening it, which is why the right-click matters.
+3. Open BoltZip normally.
 
-Still blocked?
-Open System Settings > Privacy & Security, scroll down, and click "Open Anyway".
-Or run this in Terminal:
+Alternative without Terminal:
+1. Double-click BoltZip in Applications. macOS blocks it.
+2. Open System Settings > Privacy & Security and scroll down to Security.
+3. Click "Open Anyway" next to the BoltZip message, then confirm.
 
-    xattr -dr com.apple.quarantine /Applications/BoltZip.app
+Note: on recent macOS versions, Control-clicking the app and choosing Open no longer
+bypasses this, which is why the steps above are the reliable ones.
 
 Source code and checksums: https://github.com/bsantacruzms/Bzip/releases
 TXT

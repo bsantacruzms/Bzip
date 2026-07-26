@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using BoltZip.Core.Compression;
 using BoltZip.Core.Hardware;
 using BoltZip.Core.Infrastructure;
@@ -601,7 +601,7 @@ internal static class Program
 
     private static int PrintVersion()
     {
-        Console.WriteLine("BoltZip (bz) 1.1.3");
+        Console.WriteLine("BoltZip (bz) 1.1.4");
         return 0;
     }
 

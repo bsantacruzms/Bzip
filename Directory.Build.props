@@ -3,7 +3,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
-    <Version>1.1.3</Version>
+    <Version>1.1.4</Version>
     <Authors>BoltZip</Authors>
     <Company>BoltZip</Company>
     <Product>BoltZip</Product>
