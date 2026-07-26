@@ -145,10 +145,12 @@ sudo dnf install ./boltzip-<version>-1.x86_64.rpm
 tar xzf BoltZip-<version>-linux-x64.tar.gz && cd BoltZip-<version>-linux-x64 && ./install.sh
 ```
 
-<sub>BoltZip is not (yet) in Debian's or Ubuntu's own archives, so plain `apt install boltzip`
-only works after adding the BoltZip repository. Getting into the official archives requires a
-Debian maintainer sponsor and packaging built from source against the distro's .NET runtime,
-rather than the self-contained binaries released here.</sub>
+<sub>Downloads are verified against the release's <code>SHA256SUMS.txt</code> before anything is
+installed. A dedicated APT repository (so that plain <code>apt install boltzip</code> works after a
+one-time setup) is prepared in <code>scripts/build-apt-repo.sh</code> and
+<code>.github/workflows/apt-repo.yml</code>, pending a signing key and a host. BoltZip is not in
+Debian's or Ubuntu's own archives: that requires a Debian maintainer sponsor and packaging built
+from source against the distro's .NET runtime, rather than the self-contained binaries released here.</sub>
 
 The `.deb`/`.rpm` register the `.bz` MIME type and add BoltZip to the file manager’s “Open with”.
 Right‑click menus and file associations are added by the installers only; the portable builds never
