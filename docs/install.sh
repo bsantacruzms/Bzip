@@ -90,6 +90,32 @@ say ""
 say "Downloading ..."
 curl -fsSL --proto '=https' --tlsv1.2 -o "$file" "$url" || die "download failed."
 
+# ---- integrity check ----
+# Releases publish SHA256SUMS.txt covering every artifact. Verify before installing so a
+# corrupted or tampered download never reaches your system.
+sums_url="$(printf '%s' "$json" \
+    | tr ',' '\n' \
+    | sed -n 's/.*"browser_download_url" *: *"\([^"]*\)".*/\1/p' \
+    | grep -E 'SHA256SUMS\.txt$' \
+    | head -n1)"
+
+if [ -n "$sums_url" ] && command -v sha256sum >/dev/null 2>&1; then
+    curl -fsSL --proto '=https' --tlsv1.2 -o "$tmp/SHA256SUMS.txt" "$sums_url" \
+        || die "could not download SHA256SUMS.txt."
+    name="$(basename "$url")"
+    expected="$(grep -E "  ?\\*?${name}\$" "$tmp/SHA256SUMS.txt" | awk '{print $1}' | head -n1)"
+    if [ -z "$expected" ]; then
+        die "no checksum listed for $name; refusing to install."
+    fi
+    actual="$(sha256sum "$file" | awk '{print $1}')"
+    if [ "$expected" != "$actual" ]; then
+        die "checksum mismatch for $name. Expected $expected, got $actual. Refusing to install."
+    fi
+    say "  verified:     SHA256 OK"
+else
+    say "  note:         this release predates published checksums, skipping verification."
+fi
+
 # ---- elevate only when needed ----
 SUDO=""
 if [ "$(id -u)" -ne 0 ] && [ "$kind" != "tar" ]; then

@@ -22,14 +22,14 @@ jobs:
           dotnet tool install --global wix --version 5.0.2
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix extension add -g WixToolset.UI.wixext/5.0.2
-          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -o dist/BoltZip-1.1.1.msi
+          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -o dist/BoltZip-1.1.2.msi
       - name: Build branded setup.exe (bootstrapper)
         shell: pwsh
         continue-on-error: true
         run: |
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix extension add -g WixToolset.BootstrapperApplications.wixext/5.0.2
-          wix build installers/windows/Bundle.wxs -ext WixToolset.BootstrapperApplications.wixext -o dist/BoltZip-1.1.1-setup.exe
+          wix build installers/windows/Bundle.wxs -ext WixToolset.BootstrapperApplications.wixext -o dist/BoltZip-1.1.2-setup.exe
       - name: Publish Windows artifacts
         uses: softprops/action-gh-release@v2
         with:
@@ -73,3 +73,26 @@ jobs:
             dist/*.tar.gz
             dist/*.deb
             dist/*.rpm
+
+  # Publishes SHA256SUMS.txt covering every artifact, so downloads (including the
+  # curl | sh installer) can be verified before anything is installed.
+  checksums:
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Collect release assets and hash them
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p assets && cd assets
+          gh release download "$TAG" --repo "$REPO" --pattern '*'
+          # Hash every artifact except the checksum file itself.
+          rm -f SHA256SUMS.txt
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - name: Publish checksums
+        uses: softprops/action-gh-release@v2
+        with:
+          files: assets/SHA256SUMS.txt
