@@ -1,0 +1,112 @@
+name: Sign Windows release (SignPath)
+
+# Signs the published Windows artifacts of a release with SignPath, then replaces the unsigned
+# assets on that release with the signed ones. Signed binaries are what stops Windows SmartScreen
+# from flagging BoltZip as unsafe.
+#
+# Kept separate from release.yml on purpose: the release pipeline keeps working exactly as before
+# whether or not signing is configured, and signing can be re-run on demand without rebuilding.
+#
+# One-time setup:
+#   1. Apply to the SignPath Foundation for free open-source code signing:
+#        https://signpath.org/apply     (project: BoltZip, MIT, github.com/bsantacruzms/Bzip)
+#      Approval is a manual review by the Foundation, so this workflow stays inert until then.
+#   2. In your SignPath organization create a Project (slug "boltzip") and a Signing Policy
+#      (slug "release-signing"), then create a CI user and an API token.
+#   3. Add to this repo:
+#        secret  SIGNPATH_API_TOKEN
+#        variable SIGNPATH_ORGANIZATION_ID
+#      Optionally variables SIGNPATH_PROJECT_SLUG / SIGNPATH_POLICY_SLUG to override the defaults.
+#
+# Note on the bundle: BoltZip-<version>-setup.exe is a WiX Burn bundle. Signing it directly is
+# fine for SmartScreen, but WiX also recommends detaching and signing the Burn engine so the
+# elevated engine is verified too. That refinement can be added once signing is proven working.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to sign (for example v1.1.3)'
+        required: true
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Check configuration
+        id: cfg
+        env:
+          TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "SignPath is not configured yet (SIGNPATH_API_TOKEN missing)."
+            echo "Apply for free OSS signing at https://signpath.org/apply, then add the secret."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download the release's Windows artifacts
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          mkdir -p unsigned
+          gh release download "$TAG" --repo "$REPO" --dir unsigned \
+            --pattern '*.exe' --pattern '*.msi'
+          ls -lh unsigned
+
+      - name: Upload artifacts for SignPath to collect
+        if: steps.cfg.outputs.ready == 'true'
+        id: unsigned
+        uses: actions/upload-artifact@v4
+        with:
+          name: boltzip-unsigned
+          path: unsigned/
+
+      - name: Submit signing request
+        if: steps.cfg.outputs.ready == 'true'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'boltzip' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Replace the release assets with the signed builds
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          ls -lh signed
+          # --clobber overwrites the unsigned asset of the same name.
+          for f in signed/*.exe signed/*.msi; do
+            [ -e "$f" ] || continue
+            echo "Uploading signed $(basename "$f")"
+            gh release upload "$TAG" "$f" --repo "$REPO" --clobber
+          done
+
+      - name: Refresh SHA256SUMS.txt for the signed artifacts
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.inputs.tag }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Signing changes the bytes, so the published checksums must be regenerated or the
+          # installer's verification step would fail.
+          mkdir -p all && cd all
+          gh release download "$TAG" --repo "$REPO" --pattern '*'
+          rm -f SHA256SUMS.txt
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          gh release upload "$TAG" SHA256SUMS.txt --repo "$REPO" --clobber
