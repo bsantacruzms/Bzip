@@ -18,13 +18,27 @@ public static class OptimizationPlanner
         OptimizationGoal goal,
         ArchiveFormat format,
         long? inputSizeBytes = null,
-        StorageKind targetStorage = StorageKind.Unknown)
+        StorageKind targetStorage = StorageKind.Unknown,
+        double incompressibleRatio = 0)
     {
         var storage = targetStorage == StorageKind.Unknown ? hardware.SystemStorage : targetStorage;
         var rationale = new List<string>();
 
         var level = BaseLevel(goal, format);
         rationale.Add($"Goal '{goal}' → codec level {level} for {format}.");
+
+        // When the input is dominated by already-compressed media (video, photos, music,
+        // existing archives), a general-purpose codec can only shave a fraction of a percent
+        // while spending most of its time searching for matches that do not exist. Drop to a
+        // fast store-level so the data is packed at maximum speed with no change in quality.
+        var mediaFastPath = incompressibleRatio >= ContentAnalysis.FastPathThreshold;
+        if (mediaFastPath)
+        {
+            level = FastestLevel(format);
+            rationale.Add(
+                $"Input is {incompressibleRatio * 100:0.#}% already-compressed media → " +
+                $"fast store-level {level} (media does not shrink; this maximizes speed with no quality loss).");
+        }
 
         var threads = PlanThreads(hardware, goal, storage, inputSizeBytes, rationale);
         var (windowBytes, ldm) = PlanWindow(hardware, goal, format, level, threads, inputSizeBytes, rationale);
@@ -49,9 +63,18 @@ public static class OptimizationPlanner
             BufferBytes = buffer,
             LongDistanceMatching = ldm,
             HardwareAes = hwAes,
+            MediaFastPath = mediaFastPath,
             Rationale = rationale,
         };
     }
+
+    /// <summary>The fastest useful level for a codec, used when the input barely compresses.</summary>
+    private static int FastestLevel(ArchiveFormat format) => format switch
+    {
+        ArchiveFormat.Brotli => 1,
+        _ => 1, // zstd (.bz/.zst), deflate (zip/gzip) and bzip2 are all fastest at level 1
+    };
+
 
     private static int BaseLevel(OptimizationGoal goal, ArchiveFormat format)
     {

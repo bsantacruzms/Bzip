@@ -9,6 +9,7 @@ using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using BoltZip.Core.Compression;
 using BoltZip.Core.Hardware;
+using BoltZip.Core.Media;
 
 namespace BoltZip.App;
 
@@ -51,6 +52,18 @@ public partial class MainWindow : Window
             radio.Click += (_, _) => OnGoalChanged();
         }
 
+        VideoDropZone.AddHandler(DragDrop.DropEvent, OnVideoDrop);
+        VideoDropZone.AddHandler(DragDrop.DragOverEvent, OnDragOver);
+        foreach (var radio in VideoQualityPanel.Children.OfType<RadioButton>())
+        {
+            radio.Click += (_, _) => UpdateVideoEncoderText();
+        }
+
+        foreach (var radio in VideoCodecPanel.Children.OfType<RadioButton>())
+        {
+            radio.Click += (_, _) => UpdateVideoEncoderText();
+        }
+
         ApplyStartup(startup);
         _ = LoadHardwareAsync();
     }
@@ -69,6 +82,7 @@ public partial class MainWindow : Window
         }
 
         HardwareText.Text = _hardware.Summary();
+        UpdateVideoEncoderText();
     }
 
     private void ApplyStartup(StartupAction startup)
@@ -414,6 +428,185 @@ public partial class MainWindow : Window
         }
     }
 
+    // ---- Video shrink ----
+
+    private void OnVideoDrop(object? sender, DragEventArgs e)
+    {
+        var first = ExtractPaths(e).FirstOrDefault();
+        if (first is not null)
+        {
+            VideoInputBox.Text = first;
+        }
+    }
+
+    private async void OnChooseVideo(object? sender, RoutedEventArgs e)
+    {
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Choose a video",
+            AllowMultiple = false,
+        });
+
+        var path = files.Count > 0 ? files[0].TryGetLocalPath() : null;
+        if (!string.IsNullOrEmpty(path))
+        {
+            VideoInputBox.Text = path;
+        }
+    }
+
+    private async void OnChooseVideoFolder(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Choose a folder of videos",
+            AllowMultiple = false,
+        });
+
+        var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
+        if (!string.IsNullOrEmpty(path))
+        {
+            VideoInputBox.Text = path;
+        }
+    }
+
+    private async void OnBrowseVideoOut(object? sender, RoutedEventArgs e)
+    {
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Save shrunk videos to",
+            AllowMultiple = false,
+        });
+
+        var path = folders.Count > 0 ? folders[0].TryGetLocalPath() : null;
+        if (!string.IsNullOrEmpty(path))
+        {
+            VideoOutputBox.Text = path;
+        }
+    }
+
+    private async void OnShrinkVideo(object? sender, RoutedEventArgs e)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        var input = VideoInputBox.Text ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(input) || (!File.Exists(input) && !Directory.Exists(input)))
+        {
+            SetStatus("Choose a video or folder first.", success: false);
+            return;
+        }
+
+        var ffmpeg = FfmpegLocator.FindFfmpeg();
+        if (ffmpeg is null)
+        {
+            SetStatus("FFmpeg not found.", success: false);
+            VideoResultText.Text = "Video shrinking needs FFmpeg. " + FfmpegLocator.InstallHint();
+            return;
+        }
+
+        List<string> videos;
+        try
+        {
+            videos = VideoCompressor.CollectVideos(input).ToList();
+        }
+        catch (Exception ex)
+        {
+            SetStatus(ex.Message, success: false);
+            return;
+        }
+
+        if (videos.Count == 0)
+        {
+            SetStatus("No video files found to shrink.", success: false);
+            return;
+        }
+
+        var hardware = _hardware ?? HardwareProbe.DetectFast();
+        var plan = VideoCompressor.PlanEncode(hardware, SelectedVideoCodec(), SelectedVideoQuality());
+        var outputDir = string.IsNullOrWhiteSpace(VideoOutputBox.Text) ? null : VideoOutputBox.Text;
+
+        SetBusy(true);
+        var compressor = new VideoCompressor(ffmpeg);
+        long totalIn = 0, totalOut = 0;
+        var done = 0;
+        var lines = new List<string>();
+
+        try
+        {
+            foreach (var video in videos)
+            {
+                var output = VideoCompressor.DefaultOutputPath(video, outputDir);
+                try
+                {
+                    var result = await compressor.CompressAsync(video, output, plan, CreateVideoProgress());
+                    totalIn += result.InputBytes;
+                    totalOut += result.OutputBytes;
+                    done++;
+                    lines.Add($"{Path.GetFileName(video)}: {FormatBytes(result.InputBytes)} \u2192 {FormatBytes(result.OutputBytes)} ({result.Reduction * 100:0.#}% smaller)");
+                }
+                catch (Exception ex)
+                {
+                    lines.Add($"{Path.GetFileName(video)}: failed \u2014 {ex.Message}");
+                }
+
+                VideoResultText.Text = string.Join(Environment.NewLine, lines);
+            }
+
+            if (done > 0)
+            {
+                var saved = totalIn - totalOut;
+                var pct = totalIn > 0 ? (double)saved / totalIn * 100 : 0;
+                SetStatus($"Shrunk {done} video(s): {FormatBytes(saved)} saved ({pct:0.#}%), {plan.Primary.DisplayName}.", success: true);
+                Progress.Value = 100;
+            }
+            else
+            {
+                SetStatus("No videos were shrunk.", success: false);
+            }
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private IProgress<VideoProgress> CreateVideoProgress()
+    {
+        return new Progress<VideoProgress>(p => Dispatcher.UIThread.Post(() =>
+        {
+            Progress.Value = p.Percent;
+            var speed = p.Speed > 0 ? $"  {p.Speed:0.#}x" : string.Empty;
+            StatusText.Foreground = SubtleBrush;
+            StatusText.Text = $"Encoding {p.File} {p.Percent:0}%{speed}";
+        }));
+    }
+
+    private void UpdateVideoEncoderText()
+    {
+        if (VideoEncoderText is null || _hardware is null)
+        {
+            return;
+        }
+
+        var plan = VideoCompressor.PlanEncode(_hardware, SelectedVideoCodec(), SelectedVideoQuality());
+        var ffmpeg = FfmpegLocator.IsAvailable() ? string.Empty : "   (FFmpeg not found, install to enable)";
+        VideoEncoderText.Text = $"Encoder: {plan.Primary.DisplayName}{ffmpeg}";
+    }
+
+    private VideoQuality SelectedVideoQuality()
+    {
+        var tag = VideoQualityPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag as string;
+        return Enum.TryParse<VideoQuality>(tag, out var quality) ? quality : VideoQuality.VisuallyLossless;
+    }
+
+    private VideoCodec SelectedVideoCodec()
+    {
+        var tag = VideoCodecPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag as string;
+        return Enum.TryParse<VideoCodec>(tag, out var codec) ? codec : VideoCodec.Auto;
+    }
+
     private void OnOpenWebsite(object? sender, PointerPressedEventArgs e)
     {
         try
@@ -541,6 +734,7 @@ public partial class MainWindow : Window
         _busy = busy;
         CompressButton.IsEnabled = !busy;
         ExtractButton.IsEnabled = !busy;
+        ShrinkButton.IsEnabled = !busy;
         Cursor = busy ? new Cursor(StandardCursorType.Wait) : Cursor.Default;
         if (busy)
         {

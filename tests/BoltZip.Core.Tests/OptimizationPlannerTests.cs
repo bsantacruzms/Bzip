@@ -77,4 +77,27 @@ public class OptimizationPlannerTests
         Assert.True(withAes.HardwareAes);
         Assert.False(withoutAes.HardwareAes);
     }
+
+    [Fact]
+    public void Plan_MediaDominated_UsesFastStoreLevel()
+    {
+        var hw = Hardware(16, 32L << 30, StorageKind.Nvme);
+        var normal = OptimizationPlanner.Plan(hw, OptimizationGoal.Balanced, ArchiveFormat.Bz, 1L << 30, incompressibleRatio: 0.1);
+        var media = OptimizationPlanner.Plan(hw, OptimizationGoal.Balanced, ArchiveFormat.Bz, 1L << 30, incompressibleRatio: 0.95);
+
+        Assert.False(normal.MediaFastPath);
+        Assert.True(media.MediaFastPath);
+        Assert.True(media.Level < normal.Level, $"expected fast level below {normal.Level}, got {media.Level}");
+        Assert.Contains(media.Rationale, r => r.Contains("already-compressed media"));
+    }
+
+    [Fact]
+    public void Plan_MediaFastPath_StillUsesMultipleWorkers()
+    {
+        // Storing media should still fan out across cores for speed, not collapse to one thread.
+        var media = OptimizationPlanner.Plan(
+            Hardware(16, 32L << 30, StorageKind.Nvme), OptimizationGoal.Balanced, ArchiveFormat.Bz, 4L << 30, incompressibleRatio: 0.99);
+        Assert.True(media.MediaFastPath);
+        Assert.True(media.WorkerThreads > 1);
+    }
 }

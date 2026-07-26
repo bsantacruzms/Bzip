@@ -67,6 +67,19 @@
         </section>
 
         <section class="wrap">
+            <h2>Video &amp; media files</h2>
+            <p class="subtle">Videos, photos and music are already compressed by their own codecs (H.264/H.265, JPEG, MP3/AAC). No lossless archiver, not BoltZip, 7-Zip or WinRAR, can meaningfully shrink them, so every tool lands near 100% of the original size. The honest win is <strong>time</strong>: BoltZip detects already-compressed media and stores it at full speed instead of burning CPU trying to compress the incompressible.</p>
+            <div id="benchmark-media" class="bench">Loading media benchmark…</div>
+            <p class="subtle small" id="bench-media-meta"></p>
+
+            <h3>Actually make videos smaller, on your GPU</h3>
+            <p class="subtle">To truly shrink a video you have to <strong>re-encode</strong> it. BoltZip does that with your graphics card (NVIDIA NVENC, AMD AMF, Intel Quick Sync) at a <strong>visually-lossless</strong> setting that looks identical to the source. No other mainstream archiver re-encodes video at all, so this is the one place BoltZip makes your files dramatically smaller and faster to send.</p>
+            <div id="benchmark-video" class="bench">Loading video benchmark…</div>
+            <p class="subtle small" id="bench-video-meta"></p>
+            <p class="subtle small">Run it yourself: <code>bz video myclip.mp4</code> (needs FFmpeg). Re-encoding is lossy by definition, but at the visually-lossless setting the difference is imperceptible; when you need a byte-exact copy, archive it losslessly instead.</p>
+        </section>
+
+        <section class="wrap">
             <h2>How it compares</h2>
             <div class="table-scroll">
                 <table class="compare">
@@ -80,6 +93,8 @@
                         <tr><td>Open source</td><td class="hl y">✓</td><td class="y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
                         <tr><td>Auto hardware optimization</td><td class="hl y">✓ unique</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
                         <tr><td>Explains its tuning</td><td class="hl y">✓ unique</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Auto media-aware fast path</td><td class="hl y">✓ unique</td><td class="p">~</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
+                        <tr><td>Shrink video (GPU re-encode)</td><td class="hl y">✓ unique</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
                         <tr><td>Modern codec (Zstandard)</td><td class="hl y">✓ native</td><td class="p">~ fork</td><td class="n">✗</td><td class="p">~</td><td class="n">✗</td><td class="n">✗</td></tr>
                         <tr><td>Authenticated encryption (AEAD)</td><td class="hl y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>
                         <tr><td>Argon2id password KDF</td><td class="hl y">✓</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td><td class="n">✗</td></tr>

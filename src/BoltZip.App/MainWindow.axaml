@@ -122,6 +122,54 @@
                     </ScrollViewer>
                 </TabItem>
 
+                <TabItem Header="Video">
+                    <ScrollViewer>
+                        <StackPanel Spacing="14" Margin="2,12,2,2">
+                            <Border Classes="card" x:Name="VideoDropZone" DragDrop.AllowDrop="True">
+                                <StackPanel Spacing="10">
+                                    <TextBlock Classes="h2" Text="Shrink a video" />
+                                    <TextBlock Classes="label" TextWrapping="Wrap"
+                                               Text="Re-encode a video (or a whole folder) to make it much smaller, using your GPU. At the visually-lossless setting it looks identical to the source, it is just smaller and faster to send." />
+                                    <Grid ColumnDefinitions="*,Auto,Auto">
+                                        <TextBox x:Name="VideoInputBox" Watermark="Drop a video or folder here, or browse" />
+                                        <Button Grid.Column="1" Content="Video&#x2026;" Margin="8,0,0,0" Click="OnChooseVideo" />
+                                        <Button Grid.Column="2" Content="Folder&#x2026;" Margin="8,0,0,0" Click="OnChooseVideoFolder" />
+                                    </Grid>
+                                    <TextBlock Classes="label" Text="Quality" Margin="0,6,0,0" />
+                                    <WrapPanel x:Name="VideoQualityPanel">
+                                        <RadioButton GroupName="VideoQuality" Content="Visually lossless" Tag="VisuallyLossless" IsChecked="True" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="VideoQuality" Content="Balanced" Tag="Balanced" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="VideoQuality" Content="Smaller" Tag="Smaller" Margin="0,0,8,8" />
+                                    </WrapPanel>
+                                    <TextBlock Classes="label" Text="Codec" />
+                                    <WrapPanel x:Name="VideoCodecPanel">
+                                        <RadioButton GroupName="VideoCodec" Content="Auto (HEVC)" Tag="Auto" IsChecked="True" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="VideoCodec" Content="H.265" Tag="Hevc" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="VideoCodec" Content="AV1" Tag="Av1" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="VideoCodec" Content="H.264" Tag="H264" Margin="0,0,8,8" />
+                                    </WrapPanel>
+                                    <Grid ColumnDefinitions="90,*,Auto" Margin="0,6,0,0">
+                                        <TextBlock Text="Save to" VerticalAlignment="Center" />
+                                        <TextBox x:Name="VideoOutputBox" Grid.Column="1" Watermark="Optional, defaults next to the source" />
+                                        <Button Grid.Column="2" Content="Browse&#x2026;" Margin="8,0,0,0" Click="OnBrowseVideoOut" />
+                                    </Grid>
+                                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+                                        <Button x:Name="ShrinkButton" Classes="accent" Content="Shrink video" Click="OnShrinkVideo" />
+                                        <TextBlock x:Name="VideoEncoderText" VerticalAlignment="Center" Foreground="{DynamicResource BoltSubtleBrush}" Text="" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                            <Border Classes="card">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Classes="h2" Text="Results" />
+                                    <TextBlock x:Name="VideoResultText" TextWrapping="Wrap" Foreground="{DynamicResource BoltSubtleBrush}"
+                                               Text="Re-encoding is lossy by nature, but the visually-lossless setting is imperceptible. This feature needs FFmpeg (winget install Gyan.FFmpeg)." />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
                 <TabItem Header="Settings">
                     <ScrollViewer>
                         <StackPanel Spacing="14" Margin="2,12,2,2">
@@ -135,7 +183,7 @@
                             <Border Classes="card">
                                 <StackPanel Spacing="6">
                                     <TextBlock Classes="h2" Text="About" />
-                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.0.3, modern, hardware-optimized archiver." />
+                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.1.0, modern, hardware-optimized archiver." />
                                     <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="Native .bz format: Zstandard + XChaCha20-Poly1305 + Argon2id." />
                                 </StackPanel>
                             </Border>

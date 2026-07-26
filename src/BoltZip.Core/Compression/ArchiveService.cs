@@ -44,8 +44,9 @@ public sealed class ArchiveService
 
         var hardware = request.Hardware ?? await HardwareProbe.DetectAsync(cancellationToken);
         var targetStorage = await StorageProbe.GetKindAsync(TargetDirectory(request.OutputPath), cancellationToken);
-        var size = EstimateInputSize(request.Inputs);
-        return OptimizationPlanner.Plan(hardware, request.Goal, descriptor.Format, size, targetStorage);
+        var content = ContentAnalysis.Analyze(request.Inputs);
+        return OptimizationPlanner.Plan(
+            hardware, request.Goal, descriptor.Format, content.TotalBytes, targetStorage, content.IncompressibleRatio);
     }
 
     /// <summary>Create an archive; returns the resolved output path and the plan that was applied.</summary>
@@ -69,9 +70,10 @@ public sealed class ArchiveService
 
         var hardware = request.Hardware ?? await HardwareProbe.DetectAsync(cancellationToken);
         var targetStorage = await StorageProbe.GetKindAsync(TargetDirectory(request.OutputPath), cancellationToken);
-        var size = EstimateInputSize(request.Inputs);
+        var content = ContentAnalysis.Analyze(request.Inputs);
         var plan = request.PlanOverride
-            ?? OptimizationPlanner.Plan(hardware, request.Goal, descriptor.Format, size, targetStorage);
+            ?? OptimizationPlanner.Plan(
+                hardware, request.Goal, descriptor.Format, content.TotalBytes, targetStorage, content.IncompressibleRatio);
 
         var outputPath = ResolveOutputPath(request.OutputPath, descriptor.Format, descriptor.TarWrapped, request.Inputs);
 
@@ -176,46 +178,5 @@ public sealed class ArchiveService
     {
         var directory = Path.GetDirectoryName(Path.GetFullPath(outputPath));
         return string.IsNullOrEmpty(directory) ? Directory.GetCurrentDirectory() : directory;
-    }
-
-    private static long EstimateInputSize(IReadOnlyList<string> inputs)
-    {
-        long total = 0;
-        foreach (var input in inputs)
-        {
-            try
-            {
-                var full = Path.GetFullPath(input);
-                if (Directory.Exists(full))
-                {
-                    foreach (var file in Directory.EnumerateFiles(full, "*", SearchOption.AllDirectories))
-                    {
-                        total += SafeLength(file);
-                    }
-                }
-                else if (File.Exists(full))
-                {
-                    total += SafeLength(full);
-                }
-            }
-            catch
-            {
-                // ignore unreadable inputs during estimation
-            }
-        }
-
-        return total;
-    }
-
-    private static long SafeLength(string file)
-    {
-        try
-        {
-            return new FileInfo(file).Length;
-        }
-        catch
-        {
-            return 0;
-        }
     }
 }

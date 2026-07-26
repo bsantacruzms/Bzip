@@ -2,6 +2,7 @@
 using BoltZip.Core.Compression;
 using BoltZip.Core.Hardware;
 using BoltZip.Core.Infrastructure;
+using BoltZip.Core.Media;
 
 namespace BoltZip.Cli;
 
@@ -31,6 +32,7 @@ internal static class Program
                 "list" or "l" => await ListAsync(positionals, options),
                 "create" or "c" or "add" or "a" => await CreateAsync(positionals, options),
                 "extract" or "x" or "e" => await ExtractAsync(positionals, options),
+                "video" or "shrink" => await VideoAsync(positionals, options),
                 "install-context" => InstallContext(options),
                 "uninstall-context" => UninstallContext(),
                 _ => Unknown(command),
@@ -121,6 +123,156 @@ internal static class Program
         FinishProgressLine(quiet);
         Console.WriteLine($"Extracted to {Path.GetFullPath(outputDir)}");
         return 0;
+    }
+
+    private static async Task<int> VideoAsync(List<string> positionals, Dictionary<string, string?> options)
+    {
+        if (positionals.Count < 1)
+        {
+            Console.Error.WriteLine(
+                "Usage: bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--cpu] [-y] [-q]");
+            return 2;
+        }
+
+        var ffmpeg = FfmpegLocator.FindFfmpeg();
+        if (ffmpeg is null)
+        {
+            Console.Error.WriteLine("Video shrinking needs FFmpeg, which is not installed or not on your PATH.");
+            Console.Error.WriteLine(FfmpegLocator.InstallHint());
+            return 3;
+        }
+
+        var outputDir = options.TryGetValue("out", out var o) && o is not null ? o : null;
+        var quality = ParseVideoQuality(options);
+        var codec = ParseVideoCodec(options);
+        var forceCpu = options.ContainsKey("cpu");
+        var overwrite = options.ContainsKey("overwrite");
+        var quiet = options.ContainsKey("quiet");
+
+        List<string> videos;
+        try
+        {
+            videos = VideoCompressor.CollectVideos(positionals[0]).ToList();
+        }
+        catch (FileNotFoundException ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            return 2;
+        }
+
+        if (videos.Count == 0)
+        {
+            Console.Error.WriteLine("No video files found to shrink.");
+            return 2;
+        }
+
+        var hardware = await HardwareProfileStore.GetProfileAsync(DeploymentMode.IsInstalled());
+        var plan = VideoCompressor.PlanEncode(hardware, codec, quality, forceCpu);
+
+        if (!quiet)
+        {
+            Console.WriteLine($"Encoder: {plan.Primary.DisplayName}");
+            foreach (var reason in plan.Rationale)
+            {
+                Console.WriteLine($"  - {reason}");
+            }
+
+            Console.WriteLine();
+        }
+
+        var compressor = new VideoCompressor(ffmpeg);
+        long totalIn = 0, totalOut = 0;
+        var done = 0;
+        foreach (var video in videos)
+        {
+            var output = VideoCompressor.DefaultOutputPath(video, outputDir);
+            if (!overwrite && File.Exists(output))
+            {
+                Console.WriteLine($"Skip {Path.GetFileName(video)} (output exists; use -y to overwrite)");
+                continue;
+            }
+
+            try
+            {
+                var result = await compressor.CompressAsync(video, output, plan, MakeVideoProgress(quiet));
+                FinishProgressLine(quiet);
+                totalIn += result.InputBytes;
+                totalOut += result.OutputBytes;
+                done++;
+                var enc = result.UsedFallback ? $"{result.EncoderUsed.DisplayName}, GPU fell back to CPU" : result.EncoderUsed.DisplayName;
+                Console.WriteLine(
+                    $"{Path.GetFileName(video)}  {FormatBytes(result.InputBytes)} -> {FormatBytes(result.OutputBytes)}  " +
+                    $"({result.Reduction * 100:0.#}% smaller, {result.Elapsed.TotalSeconds:0.#}s, {enc})");
+            }
+            catch (Exception ex)
+            {
+                FinishProgressLine(quiet);
+                Console.Error.WriteLine($"Failed: {Path.GetFileName(video)}: {ex.Message}");
+            }
+        }
+
+        if (videos.Count > 1)
+        {
+            var saved = totalIn - totalOut;
+            var pct = totalIn > 0 ? (double)saved / totalIn * 100 : 0;
+            Console.WriteLine();
+            Console.WriteLine($"Shrunk {done} of {videos.Count} video(s): {FormatBytes(totalIn)} -> {FormatBytes(totalOut)} ({pct:0.#}% smaller, {FormatBytes(saved)} saved).");
+        }
+
+        return done > 0 ? 0 : 1;
+    }
+
+    private static VideoQuality ParseVideoQuality(Dictionary<string, string?> options)
+    {
+        if (!options.TryGetValue("quality", out var value) || value is null)
+        {
+            return VideoQuality.VisuallyLossless;
+        }
+
+        return value.ToLowerInvariant() switch
+        {
+            "balanced" or "medium" or "mid" => VideoQuality.Balanced,
+            "smaller" or "small" or "smallest" or "low" => VideoQuality.Smaller,
+            _ => VideoQuality.VisuallyLossless,
+        };
+    }
+
+    private static VideoCodec ParseVideoCodec(Dictionary<string, string?> options)
+    {
+        if (!options.TryGetValue("codec", out var value) || value is null)
+        {
+            return VideoCodec.Auto;
+        }
+
+        return value.ToLowerInvariant() switch
+        {
+            "h265" or "hevc" or "x265" => VideoCodec.Hevc,
+            "av1" => VideoCodec.Av1,
+            "h264" or "avc" or "x264" => VideoCodec.H264,
+            _ => VideoCodec.Auto,
+        };
+    }
+
+    private static IProgress<VideoProgress> MakeVideoProgress(bool quiet)
+    {
+        if (quiet)
+        {
+            return new Progress<VideoProgress>(_ => { });
+        }
+
+        var lastPercent = -1;
+        return new Progress<VideoProgress>(p =>
+        {
+            var percent = (int)p.Percent;
+            if (percent == lastPercent)
+            {
+                return;
+            }
+
+            lastPercent = percent;
+            var speed = p.Speed > 0 ? $" ({p.Speed:0.#}x)" : string.Empty;
+            Console.Write($"\rEncoding {percent,3}%{speed}   ");
+        });
     }
 
     private static async Task<int> ListAsync(List<string> positionals, Dictionary<string, string?> options)
@@ -394,6 +546,8 @@ internal static class Program
                 case "out":
                 case "format":
                 case "app":
+                case "quality":
+                case "codec":
                     if (i + 1 < list.Count)
                     {
                         options[name] = list[++i];
@@ -447,7 +601,7 @@ internal static class Program
 
     private static int PrintVersion()
     {
-        Console.WriteLine("BoltZip (bz) 1.0.3");
+        Console.WriteLine("BoltZip (bz) 1.1.0");
         return 0;
     }
 
@@ -460,6 +614,7 @@ internal static class Program
             Usage:
               bz create <output> <input...> [--goal fast|balanced|max] [-p [password]] [-q]
               bz extract <archive> [--out <dir>] [-y] [-p [password]] [-q]
+              bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--cpu] [-y] [-q]
               bz list <archive> [-p [password]]
               bz detect <file>
               bz hw
@@ -479,6 +634,11 @@ internal static class Program
 
             Encryption (.bz): XChaCha20-Poly1305 with Argon2id key derivation.
             Compression is auto-tuned to your CPU, RAM and storage. Run 'bz hw' to preview.
+
+            Video: 'bz video' shrinks videos by re-encoding them with your GPU (NVIDIA NVENC,
+            AMD AMF, Intel Quick Sync) when available, else the CPU. 'visually-lossless' (default)
+            looks identical to the source, just smaller. Re-encoding is lossy but perceptually
+            transparent at this setting. Needs FFmpeg on your PATH (winget install Gyan.FFmpeg).
 
             BoltZip, free and open source: https://github.com/bsantacruzms/Bzip
             """);

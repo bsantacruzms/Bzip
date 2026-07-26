@@ -19,7 +19,13 @@ SIMD support, and auto‑tunes every compression job. No other mainstream archiv
   silently producing garbage.
 - ⚡ **Fast modern codec**, `.bz` is built on **Zstandard**, which beats classic Deflate/LZMA on
   the speed‑vs‑ratio curve and scales across cores.
-- 🆓 **Free, open source, no ads, no nag screens.**
+- � **Smart with media**, already‑compressed files (video, photos, music, existing archives) can't
+  be shrunk further by any lossless tool, so when **archiving** BoltZip detects them and stores them
+  at full speed instead of wasting CPU, bit‑for‑bit identical and packed fast.
+- 🎞️ **Shrink videos on your GPU**, and when you actually want a video *smaller*, `bz video`
+  re‑encodes it with your graphics card (NVIDIA NVENC, AMD AMF, Intel Quick Sync) at a
+  visually‑lossless setting, typically **50–60% smaller in seconds**. No other archiver does this.
+- �🆓 **Free, open source, no ads, no nag screens.**
 - 📦 **Portable**, single‑file executables, nothing to install.
 - 🖥️ **Three ways to use it**, a modern desktop app, a `bz` CLI, and Windows right‑click.
 - 🌍 **Cross‑platform core**, Windows today; macOS and Linux in progress.
@@ -32,6 +38,8 @@ SIMD support, and auto‑tunes every compression job. No other mainstream archiv
 | **Open source** | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
 | **Auto hardware optimization** | ✅ **unique** | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Explains its tuning choices** | ✅ **unique** | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Auto media‑aware fast path** | ✅ **unique** | ⚠️ | ❌ | ❌ | ❌ | ❌ |
+| **Shrink video (GPU re‑encode)** | ✅ **unique** | ❌ | ❌ | ❌ | ❌ | ❌ |
 | **Modern codec (Zstandard)** | ✅ native | ⚠️ fork only | ❌ | ⚠️ newer versions | ❌ | ❌ |
 | **Authenticated encryption (AEAD)** | ✅ XChaCha20‑Poly1305 | ❌ AES‑256 (no auth) | ❌ AES‑256 | ❌ AES‑256 | ❌ ZipCrypto (weak) | ❌ |
 | **Memory‑hard password KDF (Argon2id)** | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -81,6 +89,25 @@ slightly smaller on this dataset. For plain `.zip` creation, 7-Zip and Windows a
 Reproduce it with `pwsh scripts/benchmark.ps1`. (7-Zip 18.01; WinRAR/WinZip weren't installed, so
 they're in the feature table above but not timed.)
 
+### Video & media files
+
+Already-compressed media (video, photos, music) can't be shrunk by any lossless archiver, BoltZip,
+7-Zip or WinRAR alike, so every tool lands at ~100% of the original size. The difference is **time**:
+BoltZip detects media and stores it at full speed across all cores instead of trying to compress the
+incompressible. On a 500 MB media set:
+
+| Tool | Format | Compress | Size | Ratio |
+| --- | --- | ---: | ---: | ---: |
+| **BoltZip** | `.bz` | **2.93 s** | 500 MB | 100% |
+| 7-Zip | `.7z` | 6.96 s | 500 MB | 100% |
+| 7-Zip | `.zip` | 5.12 s | 500 MB | 100% |
+| Windows Zip | `.zip` | 10.53 s | 500 MB | 100% |
+
+BoltZip packed the same bytes **~1.7× faster than 7-Zip's `.zip`** and **~2.4× faster than `.7z`**,
+with output identical in size (there is nothing to gain). Reproduce with `pwsh scripts/benchmark-media.ps1`.
+To make videos genuinely smaller for faster transfer you would need lossy re-encoding (H.265/AV1),
+which changes quality; BoltZip keeps files bit-for-bit identical.
+
 ## Install
 
 **Windows**, download from the [Releases](https://github.com/bsantacruzms/Bzip/releases) page:
@@ -117,6 +144,7 @@ touch your system unless you run `install.sh`.
 ```text
 bz create <output> <input...> [--goal fast|balanced|max] [-p [password]] [-q]
 bz extract <archive> [--out <dir>] [-y] [-p [password]] [-q]
+bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--cpu]
 bz list <archive> [-p [password]]
 bz detect <file>
 bz hw                       # show your hardware and the plan it would use
@@ -132,7 +160,14 @@ bz create photos.zip .\Photos --goal max
 
 # Extract anywhere
 bz extract backup.bz --out .\restored -y
+
+# Shrink a video (or a whole folder of them) on your GPU, visually lossless
+bz video .\clips\holiday.mp4
 ```
+
+Re‑encoding a video is lossy by nature, but the default `visually-lossless` setting is
+imperceptible; it needs [FFmpeg](https://ffmpeg.org/download.html) on your `PATH`
+(`winget install Gyan.FFmpeg`).
 
 ## Building from source
 

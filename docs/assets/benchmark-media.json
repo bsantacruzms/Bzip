@@ -1,0 +1,43 @@
+﻿{
+    "cpu":  "Intel(R) Core(TM) Ultra 9 285K",
+    "logicalCores":  24,
+    "datasetMB":  500,
+    "datasetDescription":  "already-compressed media (video/photo/audio, high-entropy)",
+    "iterations":  3,
+    "statistic":  "median",
+    "date":  "2026-07-26",
+    "results":  [
+                    {
+                        "tool":  "BoltZip",
+                        "format":  ".bz",
+                        "compressSec":  2.93,
+                        "extractSec":  0.43,
+                        "sizeMB":  500,
+                        "ratioPct":  100
+                    },
+                    {
+                        "tool":  "7-Zip",
+                        "format":  ".7z",
+                        "compressSec":  6.96,
+                        "extractSec":  0.37,
+                        "sizeMB":  500,
+                        "ratioPct":  100
+                    },
+                    {
+                        "tool":  "7-Zip",
+                        "format":  ".zip",
+                        "compressSec":  5.12,
+                        "extractSec":  0.35,
+                        "sizeMB":  500,
+                        "ratioPct":  100
+                    },
+                    {
+                        "tool":  "Windows Zip",
+                        "format":  ".zip",
+                        "compressSec":  10.53,
+                        "extractSec":  0.35,
+                        "sizeMB":  500.2,
+                        "ratioPct":  100
+                    }
+                ]
+}

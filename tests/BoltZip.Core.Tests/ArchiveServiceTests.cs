@@ -95,4 +95,26 @@ public class ArchiveServiceTests
         await Assert.ThrowsAsync<NotSupportedException>(
             () => service.CreateAsync(Request(ws.Path("out.zip"), new[] { ws.Path("src") }, password: "nope")));
     }
+
+    [Fact]
+    public async Task Create_MediaDominated_UsesFastPath_And_RoundTripsExactly()
+    {
+        using var ws = new TempWorkspace();
+        // A folder dominated by already-compressed media (random bytes stand in for encoded video).
+        var video = new byte[512 * 1024];
+        new Random(1234).NextBytes(video);
+        ws.WriteFile("media/clip.mp4", video);
+        ws.WriteFile("media/readme.txt", "just a small note");
+        var service = new ArchiveService();
+
+        var result = await service.CreateAsync(Request(ws.Path("out.bz"), new[] { ws.Path("media") }));
+
+        Assert.True(result.Plan.MediaFastPath);
+        Assert.Equal(1, result.Plan.Level);
+
+        var outDir = ws.CreateDir("out");
+        await service.ExtractAsync(new ExtractRequest { ArchivePath = result.OutputPath, OutputDirectory = outDir, Overwrite = true });
+        Assert.Equal(video, File.ReadAllBytes(System.IO.Path.Combine(outDir, "media", "clip.mp4")));
+        Assert.Equal("just a small note", File.ReadAllText(System.IO.Path.Combine(outDir, "media", "readme.txt")));
+    }
 }

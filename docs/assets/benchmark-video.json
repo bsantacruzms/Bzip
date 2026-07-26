@@ -1,0 +1,23 @@
+﻿{
+    "gpu":  "NVIDIA GeForce RTX 5090",
+    "clipSeconds":  20,
+    "sourceLabel":  "1080p clip, 25 Mbit/s H.264 source",
+    "sourceMB":  57,
+    "quality":  "visually-lossless",
+    "encodeSeconds":  4,
+    "date":  "2026-07-26",
+    "results":  [
+                    {
+                        "tool":  "BoltZip (GPU re-encode)",
+                        "outMB":  23.3,
+                        "reductionPct":  59.2,
+                        "note":  "HEVC, visually lossless, 4s on GPU"
+                    },
+                    {
+                        "tool":  "7-Zip / WinRAR / Windows Zip",
+                        "outMB":  57,
+                        "reductionPct":  0,
+                        "note":  "lossless archivers cannot re-encode video"
+                    }
+                ]
+}

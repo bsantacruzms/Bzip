@@ -27,6 +27,13 @@ public sealed record CompressionPlan
     /// <summary>True when hardware-accelerated AES is available for encrypted formats.</summary>
     public required bool HardwareAes { get; init; }
 
+    /// <summary>
+    /// True when the input is dominated by already-compressed media (video, photos, music,
+    /// existing archives). The planner then favors a fast store-level pass: compressing such
+    /// data is wasted effort, so BoltZip packs it at maximum speed with no quality loss.
+    /// </summary>
+    public bool MediaFastPath { get; init; }
+
     /// <summary>Human-readable explanation of the tuning decisions.</summary>
     public required IReadOnlyList<string> Rationale { get; init; }
 

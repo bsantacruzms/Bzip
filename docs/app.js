@@ -46,6 +46,89 @@ function render(d) {
         '</tr></thead><tbody>' + rows + '</tbody></table>';
 }
 
+// Media chart: same numbers, but for already-compressed video/photo/audio.
+fetch('assets/benchmark-media.json')
+    .then(function (r) { if (!r.ok) throw new Error('no data'); return r.json(); })
+    .then(renderMedia)
+    .catch(function () {
+        var el = document.getElementById('benchmark-media');
+        if (el) { el.innerHTML = '<p class="subtle">Media benchmark will appear here once it has been generated.</p>'; }
+    });
+
+function renderMedia(d) {
+    var host = document.getElementById('benchmark-media');
+    if (!host) { return; }
+    var results = d.results || [];
+    if (!results.length) { host.innerHTML = '<p class="subtle">No media benchmark results yet.</p>'; return; }
+
+    var maxComp = Math.max.apply(null, results.map(function (r) { return r.compressSec; }));
+    var rows = results.map(function (r) {
+        var me = (r.tool || '').toLowerCase().indexOf('boltzip') !== -1;
+        var pct = Math.max(3, (r.compressSec / maxComp) * 100);
+        return '<tr class="' + (me ? 'me' : '') + '">' +
+            '<td class="tool">' + (me ? '⚡ ' : '') + r.tool + '</td>' +
+            '<td>' + r.format + '</td>' +
+            '<td class="num">' + r.compressSec + 's</td>' +
+            '<td><div class="bar"><span style="width:' + pct.toFixed(0) + '%"></span></div></td>' +
+            '<td class="num">' + r.sizeMB + ' MB</td>' +
+            '<td class="num">' + r.ratioPct + '%</td>' +
+            '</tr>';
+    }).join('');
+
+    host.innerHTML =
+        '<table><thead><tr>' +
+        '<th>Tool</th><th>Format</th><th>Compress</th><th>Compress (relative)</th>' +
+        '<th>Size</th><th>Ratio</th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+    var meta = document.getElementById('bench-media-meta');
+    if (meta && d.cpu) {
+        var method = d.iterations && d.statistic ? d.statistic + ' of ' + d.iterations + ' runs; ' : '';
+        meta.textContent = 'Measured on ' + d.cpu + ' (' + d.logicalCores + ' cores), ' + method +
+            d.datasetMB + ' MB ' + d.datasetDescription + ', ' + d.date +
+            '. Lower compress time is better; a ratio near 100% correctly means no shrink.';
+    }
+}
+
+// Video chart: the one place BoltZip shrinks media — GPU re-encoding vs archivers that can't.
+fetch('assets/benchmark-video.json')
+    .then(function (r) { if (!r.ok) throw new Error('no data'); return r.json(); })
+    .then(renderVideo)
+    .catch(function () {
+        var el = document.getElementById('benchmark-video');
+        if (el) { el.innerHTML = '<p class="subtle">Video benchmark will appear here once it has been generated.</p>'; }
+    });
+
+function renderVideo(d) {
+    var host = document.getElementById('benchmark-video');
+    if (!host) { return; }
+    var results = d.results || [];
+    if (!results.length) { host.innerHTML = '<p class="subtle">No video benchmark results yet.</p>'; return; }
+
+    var rows = results.map(function (r) {
+        var me = (r.tool || '').toLowerCase().indexOf('boltzip') !== -1;
+        var pct = Math.max(1, r.reductionPct);
+        return '<tr class="' + (me ? 'me' : '') + '">' +
+            '<td class="tool">' + (me ? '⚡ ' : '') + r.tool + '</td>' +
+            '<td class="num">' + r.outMB + ' MB</td>' +
+            '<td><div class="bar"><span style="width:' + pct.toFixed(0) + '%"></span></div></td>' +
+            '<td class="num">' + r.reductionPct + '% smaller</td>' +
+            '</tr>';
+    }).join('');
+
+    host.innerHTML =
+        '<table><thead><tr>' +
+        '<th>Tool</th><th>Result</th><th>Size reduction</th><th></th>' +
+        '</tr></thead><tbody>' + rows + '</tbody></table>';
+
+    var meta = document.getElementById('bench-video-meta');
+    if (meta && d.gpu && results[0]) {
+        meta.textContent = 'A ' + d.sourceMB + ' MB ' + d.sourceLabel + ' shrunk to ' + results[0].outMB +
+            ' MB on ' + d.gpu + ' at ' + d.quality + ' quality (~' + d.encodeSeconds + 's). ' +
+            'Lossless archivers leave video unchanged. ' + d.date + '.';
+    }
+}
+
 // ---- Download buttons: point to the latest GitHub release assets ----
 (function () {
     var REPO = 'bsantacruzms/Bzip';
