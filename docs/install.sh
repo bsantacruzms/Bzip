@@ -11,15 +11,20 @@
 # Review before running, as you should with any install script:
 #   curl -fsSL https://bsantacruzms.github.io/Bzip/install.sh | less
 #
+# Options:  --portable   install into ~/.local without root, even on Debian/Fedora
+#           --dry-run    show what would be downloaded, then stop
+#
 set -eu
 
 REPO="bsantacruzms/Bzip"
 API="https://api.github.com/repos/$REPO/releases/latest"
 DRY_RUN="${DRY_RUN:-0}"
+FORCE_PORTABLE="${FORCE_PORTABLE:-0}"
 
 for arg in "$@"; do
     case "$arg" in
         --dry-run) DRY_RUN=1 ;;
+        --portable) FORCE_PORTABLE=1 ;;
         -h|--help) sed -n '2,14p' "$0"; exit 0 ;;
     esac
 done
@@ -39,7 +44,9 @@ esac
 
 # ---- package manager ----
 kind=tar
-if command -v dpkg >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
+if [ "$FORCE_PORTABLE" = "1" ]; then
+    kind=tar
+elif command -v dpkg >/dev/null 2>&1 && command -v apt-get >/dev/null 2>&1; then
     kind=deb
 elif command -v rpm >/dev/null 2>&1; then
     kind=rpm
@@ -106,7 +113,10 @@ case "$kind" in
         tar xzf "$file" -C "$dir"
         inner="$(find "$dir" -maxdepth 2 -name install.sh -print -quit)"
         [ -n "$inner" ] || die "the tarball did not contain install.sh."
-        sh "$inner"
+        # The bundled installer is a bash script (it uses 'set -o pipefail'), so run it with
+        # bash rather than whatever /bin/sh happens to be, which is dash on Debian/Ubuntu.
+        command -v bash >/dev/null 2>&1 || die "bash is required for the portable install."
+        bash "$inner"
         ;;
 esac
 
