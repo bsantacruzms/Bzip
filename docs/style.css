@@ -37,6 +37,50 @@ code {
     font-size: 0.9em;
 }
 
+/* Copy-and-run command blocks. */
+.cmd {
+    position: relative;
+    background: #1c1e22;
+    border: 1px solid #2b2e34;
+    border-radius: 8px;
+    padding: 40px 14px 12px;
+    margin: 10px 0;
+}
+
+.cmd code {
+    background: none;
+    border: 0;
+    padding: 0;
+    color: #eaeef2;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    /* Wrap instead of scrolling, so the whole command is readable at any width. */
+    white-space: pre-wrap;
+    word-break: break-all;
+    display: block;
+}
+
+.cmd .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #33373f;
+    color: #eaeef2;
+    border: 1px solid #454a54;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    line-height: 1.4;
+}
+
+.cmd .copy-btn:hover { background: #414652; }
+.cmd .copy-btn.done { background: #2e7d43; border-color: #2e7d43; }
+
+.steps { margin: 8px 0 0; padding-left: 20px; }
+.steps li { margin: 4px 0; }
+
 .accent { color: var(--accent); }
 .subtle { color: var(--subtle); }
 .small { font-size: 0.85rem; }

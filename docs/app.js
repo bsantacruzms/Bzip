@@ -129,6 +129,60 @@ function renderVideo(d) {
     }
 }
 
+// ---- Copy buttons on command blocks ----
+(function () {
+    function addCopyButtons() {
+        var blocks = document.querySelectorAll('.cmd');
+        Array.prototype.forEach.call(blocks, function (block) {
+            if (block.querySelector('.copy-btn')) { return; }
+            var code = block.querySelector('code');
+            if (!code) { return; }
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'copy-btn';
+            btn.textContent = 'Copy';
+            btn.addEventListener('click', function () {
+                var text = code.textContent;
+                var done = function () {
+                    btn.textContent = 'Copied';
+                    btn.classList.add('done');
+                    setTimeout(function () {
+                        btn.textContent = 'Copy';
+                        btn.classList.remove('done');
+                    }, 1600);
+                };
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(done, fallback);
+                } else {
+                    fallback();
+                }
+
+                // Older browsers and non-secure contexts have no clipboard API.
+                function fallback() {
+                    var ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.setAttribute('readonly', '');
+                    ta.style.position = 'absolute';
+                    ta.style.left = '-9999px';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try { document.execCommand('copy'); done(); } catch (e) { btn.textContent = 'Select and copy'; }
+                    document.body.removeChild(ta);
+                }
+            });
+            block.appendChild(btn);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', addCopyButtons);
+    } else {
+        addCopyButtons();
+    }
+})();
+
 // ---- Download buttons: point to the latest GitHub release assets ----
 (function () {
     var REPO = 'bsantacruzms/Bzip';

@@ -149,20 +149,22 @@
                 </div>
                 <div class="card dl-card">
                     <h3>🍎 macOS</h3>
-                    <p>A <code>.dmg</code> drag-to-Applications build. Archives open with BoltZip from Finder’s “Open With”.</p>
-                    <p class="subtle small">Easiest install, handles Apple's first-launch block for you:</p>
-                    <pre><code>curl -fsSL https://bsantacruzms.github.io/Bzip/install-mac.sh | bash</code></pre>
+                    <p>Apple silicon (M1/M2/M3/M4) and Intel builds. Archives open with BoltZip from Finder’s “Open With”.</p>
+                    <p class="subtle small"><strong>Recommended.</strong> Paste this into <strong>Terminal</strong>. It installs BoltZip and clears Apple’s first-launch block for you:</p>
+                    <div class="cmd"><code>curl -fsSL https://bsantacruzms.github.io/Bzip/install-mac.sh | bash</code></div>
+                    <p class="subtle small">Prefer the disk image? Download it, drag BoltZip to Applications, then paste this once so macOS will open it:</p>
+                    <div class="cmd"><code>xattr -dr com.apple.quarantine /Applications/BoltZip.app</code></div>
                     <a class="btn primary dl-primary" id="dl-mac-arm" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download for macOS (Apple Silicon)</a>
                     <div class="dl-links">
                         <a class="btn" id="dl-mac-x64" href="https://github.com/bsantacruzms/Bzip/releases/latest">Intel Mac (.dmg)</a>
                     </div>
-                    <p class="subtle small">Installing the <code>.dmg</code> by hand? macOS blocks non-notarized apps, so afterwards run <code>xattr -dr com.apple.quarantine /Applications/BoltZip.app</code>, or allow it in <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>.</p>
+                    <p class="subtle small">Seeing “could not be verified” or “damaged”? That is macOS blocking apps that are not notarized, which needs a paid Apple Developer account. Either command above fixes it, or allow BoltZip in <strong>System Settings → Privacy &amp; Security → Open Anyway</strong>. On recent macOS, right-clicking the app and choosing <em>Open</em> no longer works.</p>
                 </div>
                 <div class="card dl-card">
                     <h3>🐧 Linux</h3>
                     <p>Native packages plus a portable tarball with the <code>bz</code> CLI. Registers the <code>.bz</code> type and file-manager associations.</p>
                     <p class="subtle small">One command installs the right package for your system:</p>
-                    <pre><code>curl -fsSL https://bsantacruzms.github.io/Bzip/install.sh | sh</code></pre>
+                    <div class="cmd"><code>curl -fsSL https://bsantacruzms.github.io/Bzip/install.sh | sh</code></div>
                     <a class="btn primary dl-primary" id="dl-lin-deb" href="https://github.com/bsantacruzms/Bzip/releases/latest">Download for Linux (.deb)</a>
                     <div class="dl-links">
                         <a class="btn" id="dl-lin-rpm" href="https://github.com/bsantacruzms/Bzip/releases/latest">.rpm</a>
