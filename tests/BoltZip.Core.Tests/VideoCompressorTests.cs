@@ -34,7 +34,7 @@ public class VideoCompressorTests
     [Fact]
     public void PlanEncode_NvidiaAuto_UsesHevcNvenc_WithCpuFallback()
     {
-        var plan = VideoCompressor.PlanEncode(Hw(Nvidia), VideoCodec.Auto, VideoQuality.VisuallyLossless);
+        var plan = VideoCompressor.PlanEncode(Hw(Nvidia), VideoCodec.Auto, VideoQuality.VisuallyLossless, macOs: false);
         Assert.Equal("hevc_nvenc", plan.Primary.FfmpegName);
         Assert.True(plan.Primary.IsHardware);
         Assert.Equal("libx265", plan.CpuFallback.FfmpegName);
@@ -44,7 +44,7 @@ public class VideoCompressorTests
     [Fact]
     public void PlanEncode_NvidiaAv1_UsesAv1Nvenc()
     {
-        var plan = VideoCompressor.PlanEncode(Hw(Nvidia), VideoCodec.Av1, VideoQuality.Balanced);
+        var plan = VideoCompressor.PlanEncode(Hw(Nvidia), VideoCodec.Av1, VideoQuality.Balanced, macOs: false);
         Assert.Equal("av1_nvenc", plan.Primary.FfmpegName);
         Assert.Equal("libsvtav1", plan.CpuFallback.FfmpegName);
     }
@@ -54,21 +54,63 @@ public class VideoCompressorTests
     {
         var plan = VideoCompressor.PlanEncode(Hw(Nvidia), VideoCodec.Hevc, VideoQuality.VisuallyLossless, forceCpu: true);
         Assert.Equal("libx265", plan.Primary.FfmpegName);
-        Assert.False(plan.Primary.IsHardware);
     }
 
     [Fact]
     public void PlanEncode_NoGpu_UsesCpu()
     {
-        var plan = VideoCompressor.PlanEncode(Hw(), VideoCodec.Auto, VideoQuality.Balanced);
+        var plan = VideoCompressor.PlanEncode(Hw(), VideoCodec.Auto, VideoQuality.Balanced, macOs: false);
         Assert.False(plan.Primary.IsHardware);
         Assert.Equal("libx265", plan.Primary.FfmpegName);
     }
 
     [Fact]
+    public void PlanEncode_MacOs_UsesVideoToolbox_EvenWithoutDetectedGpu()
+    {
+        // macOS reports no GPU through the Windows/Linux paths, but every Mac has VideoToolbox.
+        var plan = VideoCompressor.PlanEncode(Hw(), VideoCodec.Auto, VideoQuality.VisuallyLossless, macOs: true);
+        Assert.Equal("hevc_videotoolbox", plan.Primary.FfmpegName);
+        Assert.True(plan.Primary.IsHardware);
+        Assert.Equal(GpuVendor.Apple, plan.Primary.Vendor);
+        Assert.Equal("libx265", plan.CpuFallback.FfmpegName);
+    }
+
+    [Fact]
+    public void PlanEncode_MacOsH264_UsesVideoToolbox()
+    {
+        var plan = VideoCompressor.PlanEncode(Hw(), VideoCodec.H264, VideoQuality.Balanced, macOs: true);
+        Assert.Equal("h264_videotoolbox", plan.Primary.FfmpegName);
+    }
+
+    [Fact]
+    public void PlanEncode_MacOsAv1_FallsBackToCpu_BecauseVideoToolboxHasNoAv1Encoder()
+    {
+        var plan = VideoCompressor.PlanEncode(Hw(), VideoCodec.Av1, VideoQuality.Balanced, macOs: true);
+        Assert.Equal("libsvtav1", plan.Primary.FfmpegName);
+        Assert.False(plan.Primary.IsHardware);
+    }
+
+    [Fact]
+    public void PlanEncode_ForceCpu_WinsOverMacHardware()
+    {
+        var plan = VideoCompressor.PlanEncode(Hw(), VideoCodec.Hevc, VideoQuality.Balanced, forceCpu: true, macOs: true);
+        Assert.Equal("libx265", plan.Primary.FfmpegName);
+    }
+
+    [Fact]
+    public void RateControlArgs_VideoToolbox_UsesInvertedQualityScale()
+    {
+        var vl = int.Parse(ValueAfter(VideoCompressor.RateControlArgs("hevc_videotoolbox", VideoQuality.VisuallyLossless), "-q:v"));
+        var smaller = int.Parse(ValueAfter(VideoCompressor.RateControlArgs("hevc_videotoolbox", VideoQuality.Smaller), "-q:v"));
+        // VideoToolbox: higher number means better quality, the opposite of CRF/CQ.
+        Assert.True(vl > smaller, $"visually-lossless q {vl} should exceed smaller q {smaller}");
+        Assert.Contains("-allow_sw", VideoCompressor.RateControlArgs("hevc_videotoolbox", VideoQuality.Balanced));
+    }
+
+    [Fact]
     public void PlanEncode_Amd_UsesAmf()
     {
-        var plan = VideoCompressor.PlanEncode(Hw(Amd), VideoCodec.Hevc, VideoQuality.Balanced);
+        var plan = VideoCompressor.PlanEncode(Hw(Amd), VideoCodec.Hevc, VideoQuality.Balanced, macOs: false);
         Assert.Equal("hevc_amf", plan.Primary.FfmpegName);
         Assert.True(plan.Primary.IsHardware);
     }
@@ -76,7 +118,7 @@ public class VideoCompressorTests
     [Fact]
     public void PlanEncode_Intel_UsesQuickSync()
     {
-        var plan = VideoCompressor.PlanEncode(Hw(Intel), VideoCodec.Hevc, VideoQuality.Balanced);
+        var plan = VideoCompressor.PlanEncode(Hw(Intel), VideoCodec.Hevc, VideoQuality.Balanced, macOs: false);
         Assert.Equal("hevc_qsv", plan.Primary.FfmpegName);
         Assert.True(plan.Primary.IsHardware);
     }

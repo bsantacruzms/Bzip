@@ -23,8 +23,9 @@ SIMD support, and auto‑tunes every compression job. No other mainstream archiv
   be shrunk further by any lossless tool, so when **archiving** BoltZip detects them and stores them
   at full speed instead of wasting CPU, bit‑for‑bit identical and packed fast.
 - 🎞️ **Shrink videos on your GPU**, and when you actually want a video *smaller*, `bz video`
-  re‑encodes it with your graphics card (NVIDIA NVENC, AMD AMF, Intel Quick Sync) at a
-  visually‑lossless setting, typically **50–60% smaller in seconds**. No other archiver does this.
+  re‑encodes it with your graphics hardware (NVIDIA NVENC, AMD AMF, Intel Quick Sync, Apple
+  VideoToolbox on macOS) at a visually‑lossless setting, typically **50–60% smaller in seconds**.
+  No other archiver does this.
 - �🆓 **Free, open source, no ads, no nag screens.**
 - 📦 **Portable**, single‑file executables, nothing to install.
 - 🖥️ **Three ways to use it**, a modern desktop app, a `bz` CLI, and Windows right‑click.

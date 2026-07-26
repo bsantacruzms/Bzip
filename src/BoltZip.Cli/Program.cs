@@ -601,7 +601,7 @@ internal static class Program
 
     private static int PrintVersion()
     {
-        Console.WriteLine("BoltZip (bz) 1.1.0");
+        Console.WriteLine("BoltZip (bz) 1.1.1");
         return 0;
     }
 
@@ -636,9 +636,10 @@ internal static class Program
             Compression is auto-tuned to your CPU, RAM and storage. Run 'bz hw' to preview.
 
             Video: 'bz video' shrinks videos by re-encoding them with your GPU (NVIDIA NVENC,
-            AMD AMF, Intel Quick Sync) when available, else the CPU. 'visually-lossless' (default)
-            looks identical to the source, just smaller. Re-encoding is lossy but perceptually
-            transparent at this setting. Needs FFmpeg on your PATH (winget install Gyan.FFmpeg).
+            AMD AMF, Intel Quick Sync, Apple VideoToolbox) when available, else the CPU.
+            'visually-lossless' (default) looks identical to the source, just smaller. Re-encoding
+            is lossy but perceptually transparent at this setting. Needs FFmpeg on your PATH
+            (winget install Gyan.FFmpeg, brew install ffmpeg, apt install ffmpeg).
 
             BoltZip, free and open source: https://github.com/bsantacruzms/Bzip
             """);

@@ -87,6 +87,11 @@ public static class HardwareProbe
 
     private static async Task<IReadOnlyList<GpuInfo>> DetectGpusAsync(CancellationToken cancellationToken)
     {
+        if (OperatingSystem.IsLinux())
+        {
+            return DetectLinuxGpus();
+        }
+
         if (!OperatingSystem.IsWindows())
         {
             return Array.Empty<GpuInfo>();
@@ -103,6 +108,59 @@ public static class HardwareProbe
             timeoutMs: 7000).ConfigureAwait(false);
 
         return ParseGpuJson(json);
+    }
+
+    /// <summary>
+    /// Reads graphics adapters from sysfs on Linux. Each DRM card exposes its PCI vendor id,
+    /// which is enough to know whether a hardware video encoder (NVENC, Quick Sync) is present.
+    /// </summary>
+    private static IReadOnlyList<GpuInfo> DetectLinuxGpus()
+    {
+        var gpus = new List<GpuInfo>();
+        try
+        {
+            const string drm = "/sys/class/drm";
+            if (!Directory.Exists(drm))
+            {
+                return Array.Empty<GpuInfo>();
+            }
+
+            foreach (var card in Directory.EnumerateDirectories(drm, "card*"))
+            {
+                // Skip connector entries such as card0-HDMI-A-1.
+                if (Path.GetFileName(card).Contains('-'))
+                {
+                    continue;
+                }
+
+                var vendorFile = Path.Combine(card, "device", "vendor");
+                if (!File.Exists(vendorFile))
+                {
+                    continue;
+                }
+
+                var id = File.ReadAllText(vendorFile).Trim();
+                var (vendor, name) = id.ToLowerInvariant() switch
+                {
+                    "0x10de" => (GpuVendor.Nvidia, "NVIDIA GPU"),
+                    "0x1002" or "0x1022" => (GpuVendor.Amd, "AMD GPU"),
+                    "0x8086" => (GpuVendor.Intel, "Intel GPU"),
+                    _ => (GpuVendor.Unknown, "GPU"),
+                };
+
+                if (vendor != GpuVendor.Unknown && !gpus.Any(g => g.Vendor == vendor))
+                {
+                    gpus.Add(new GpuInfo(name, vendor, 0, null));
+                }
+            }
+        }
+        catch
+        {
+            // sysfs unreadable (container, permissions); fall back to no GPU.
+            return Array.Empty<GpuInfo>();
+        }
+
+        return gpus;
     }
 
     internal static IReadOnlyList<GpuInfo> ParseGpuJson(string json)

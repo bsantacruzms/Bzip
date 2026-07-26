@@ -129,7 +129,7 @@
                                 <StackPanel Spacing="10">
                                     <TextBlock Classes="h2" Text="Shrink a video" />
                                     <TextBlock Classes="label" TextWrapping="Wrap"
-                                               Text="Re-encode a video (or a whole folder) to make it much smaller, using your GPU. At the visually-lossless setting it looks identical to the source, it is just smaller and faster to send." />
+                                               Text="Re-encode a video (or a whole folder) to make it much smaller, using your GPU (NVENC, AMF, Quick Sync or Apple VideoToolbox). At the visually-lossless setting it looks identical to the source, it is just smaller and faster to send." />
                                     <Grid ColumnDefinitions="*,Auto,Auto">
                                         <TextBox x:Name="VideoInputBox" Watermark="Drop a video or folder here, or browse" />
                                         <Button Grid.Column="1" Content="Video&#x2026;" Margin="8,0,0,0" Click="OnChooseVideo" />
@@ -183,7 +183,7 @@
                             <Border Classes="card">
                                 <StackPanel Spacing="6">
                                     <TextBlock Classes="h2" Text="About" />
-                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.1.0, modern, hardware-optimized archiver." />
+                                    <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="BoltZip 1.1.1, modern, hardware-optimized archiver." />
                                     <TextBlock Foreground="{DynamicResource BoltSubtleBrush}" Text="Native .bz format: Zstandard + XChaCha20-Poly1305 + Argon2id." />
                                 </StackPanel>
                             </Border>

@@ -73,7 +73,7 @@
             <p class="subtle small" id="bench-media-meta"></p>
 
             <h3>Actually make videos smaller, on your GPU</h3>
-            <p class="subtle">To truly shrink a video you have to <strong>re-encode</strong> it. BoltZip does that with your graphics card (NVIDIA NVENC, AMD AMF, Intel Quick Sync) at a <strong>visually-lossless</strong> setting that looks identical to the source. No other mainstream archiver re-encodes video at all, so this is the one place BoltZip makes your files dramatically smaller and faster to send.</p>
+            <p class="subtle">To truly shrink a video you have to <strong>re-encode</strong> it. BoltZip does that with your graphics hardware (NVIDIA NVENC, AMD AMF, Intel Quick Sync, Apple VideoToolbox on macOS) at a <strong>visually-lossless</strong> setting that looks identical to the source. No other mainstream archiver re-encodes video at all, so this is the one place BoltZip makes your files dramatically smaller and faster to send.</p>
             <div id="benchmark-video" class="bench">Loading video benchmark…</div>
             <p class="subtle small" id="bench-video-meta"></p>
             <p class="subtle small">Run it yourself: <code>bz video myclip.mp4</code> (needs FFmpeg). Re-encoding is lossy by definition, but at the visually-lossless setting the difference is imperceptible; when you need a byte-exact copy, archive it losslessly instead.</p>

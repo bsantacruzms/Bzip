@@ -24,8 +24,9 @@ public sealed class VideoCompressor
     }
 
     /// <summary>Chooses the encoder for the given hardware, requested codec and quality.</summary>
+    /// <param name="macOs">Overrides macOS detection (for tests). Null uses the current OS.</param>
     public static VideoEncodePlan PlanEncode(
-        HardwareProfile hardware, VideoCodec codec, VideoQuality quality, bool forceCpu = false)
+        HardwareProfile hardware, VideoCodec codec, VideoQuality quality, bool forceCpu = false, bool? macOs = null)
     {
         var target = codec == VideoCodec.Auto ? VideoCodec.Hevc : codec;
         var rationale = new List<string>();
@@ -35,11 +36,33 @@ public sealed class VideoCompressor
 
         VideoEncoder cpuFallback = CpuEncoder(target);
 
-        if (forceCpu || gpu is null)
+        if (forceCpu)
         {
-            rationale.Add(forceCpu
-                ? "Software encoding requested → using a CPU encoder."
-                : "No GPU video encoder detected → using a CPU encoder.");
+            rationale.Add("Software encoding requested → using a CPU encoder.");
+            rationale.Add($"Encoder: {cpuFallback.DisplayName}, quality '{quality}'.");
+            return new VideoEncodePlan(cpuFallback, cpuFallback, quality, rationale);
+        }
+
+        // Every Mac (Intel and Apple silicon) has VideoToolbox hardware encoding, so it does not
+        // depend on discovering a discrete GPU the way the Windows/Linux paths do.
+        if (macOs ?? OperatingSystem.IsMacOS())
+        {
+            var appleEncoder = AppleEncoder(target);
+            if (appleEncoder is not null)
+            {
+                rationale.Add($"macOS → hardware {target} encoding with VideoToolbox ({appleEncoder.FfmpegName}).");
+                rationale.Add($"Quality '{quality}'. Falls back to {cpuFallback.DisplayName} if VideoToolbox is unavailable.");
+                return new VideoEncodePlan(appleEncoder, cpuFallback, quality, rationale);
+            }
+
+            rationale.Add($"macOS VideoToolbox has no {target} encoder → using a CPU encoder.");
+            rationale.Add($"Encoder: {cpuFallback.DisplayName}, quality '{quality}'.");
+            return new VideoEncodePlan(cpuFallback, cpuFallback, quality, rationale);
+        }
+
+        if (gpu is null)
+        {
+            rationale.Add("No GPU video encoder detected → using a CPU encoder.");
             rationale.Add($"Encoder: {cpuFallback.DisplayName}, quality '{quality}'.");
             return new VideoEncodePlan(cpuFallback, cpuFallback, quality, rationale);
         }
@@ -56,6 +79,15 @@ public sealed class VideoCompressor
         rationale.Add($"Quality '{quality}'. Falls back to {cpuFallback.DisplayName} if the GPU encoder is unavailable.");
         return new VideoEncodePlan(primary, cpuFallback, quality, rationale);
     }
+
+    /// <summary>Apple VideoToolbox encoders. VideoToolbox has no AV1 encoder, so AV1 stays on the CPU.</summary>
+    private static VideoEncoder? AppleEncoder(VideoCodec codec) => codec switch
+    {
+        VideoCodec.Hevc => new("hevc_videotoolbox", "Apple HEVC (VideoToolbox)", VideoCodec.Hevc, true, GpuVendor.Apple),
+        VideoCodec.H264 => new("h264_videotoolbox", "Apple H.264 (VideoToolbox)", VideoCodec.H264, true, GpuVendor.Apple),
+        _ => null,
+    };
+
 
     private static VideoEncoder? GpuEncoder(GpuVendor vendor, VideoCodec codec) => vendor switch
     {
@@ -142,6 +174,13 @@ public sealed class VideoCompressor
             return new[] { "-rc", "cqp", "-qp_i", q, "-qp_p", q, "-qp_b", q };
         }
 
+        if (encoder.Contains("videotoolbox", StringComparison.Ordinal))
+        {
+            // VideoToolbox quality runs 0-100 where HIGHER is better, the opposite of CRF/CQ.
+            // -allow_sw lets macOS fall back to its software encoder rather than failing outright.
+            return new[] { "-q:v", q, "-allow_sw", "1" };
+        }
+
         if (encoder.Contains("svtav1", StringComparison.Ordinal))
         {
             return new[] { "-preset", "6", "-crf", q };
@@ -157,6 +196,8 @@ public sealed class VideoCompressor
 
         (int vl, int bal, int sm) = encoder switch
         {
+            // VideoToolbox is inverted: higher number = higher quality.
+            _ when encoder.Contains("videotoolbox", StringComparison.Ordinal) => (65, 50, 38),
             _ when encoder.Contains("nvenc", StringComparison.Ordinal) => av1 ? (28, 34, 40) : (19, 24, 28),
             _ when encoder.Contains("qsv", StringComparison.Ordinal) => av1 ? (28, 34, 40) : (22, 26, 30),
             _ when encoder.Contains("amf", StringComparison.Ordinal) => av1 ? (28, 34, 40) : (20, 24, 28),
