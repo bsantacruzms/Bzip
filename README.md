@@ -122,8 +122,24 @@ which changes quality; BoltZip keeps files bit-for-bit identical.
 - **`BoltZipTool-<version>-portable.exe`**, the desktop app, no install (no system changes).
 - **`bz-<version>-portable.exe`**, the CLI.
 
-**macOS**, `BoltZip-<version>-<arch>.dmg` (drag to Applications). The app declares the archive types
-it can open, so they list BoltZip under **Finder → Open With** (pick *Change All…* to make it the default).
+> **“Windows protected your PC” / “unsafe”?** BoltZip is not signed with a paid Authenticode
+> certificate, so Windows SmartScreen warns about it. Click **More info → Run anyway**. You can
+> confirm the download is genuine first by checking it against `SHA256SUMS.txt` on the release page:
+> ```powershell
+> (Get-FileHash .\BoltZip-<version>-setup.exe -Algorithm SHA256).Hash
+> ```
+
+**macOS**, `BoltZip-<version>-<arch>.dmg` (drag to Applications). Pick the **Apple Silicon** build for
+M‑series Macs and the **x64** build for Intel Macs. The app declares the archive types it can open, so
+they list BoltZip under **Finder → Open With** (pick *Change All…* to make it the default).
+
+> **First launch on macOS:** right‑click (or Control‑click) BoltZip in Applications and choose
+> **Open**, then confirm. This is needed once, because BoltZip is not signed with a paid Apple
+> Developer ID. If macOS says the app is *damaged*, you have a build older than 1.1.3, download the
+> current release. To clear a stale quarantine flag:
+> ```bash
+> xattr -dr com.apple.quarantine /Applications/BoltZip.app
+> ```
 
 **Linux**, one command installs the right package for your system:
 

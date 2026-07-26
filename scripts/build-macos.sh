@@ -5,7 +5,7 @@
 #
 set -euo pipefail
 
-VERSION="1.1.2"
+VERSION="1.1.3"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 mkdir -p dist
@@ -103,6 +103,45 @@ for RID in osx-arm64 osx-x64; do
 PLIST
 
     ln -sf /Applications "$STAGE/Applications"
+
+    # BoltZip is not signed with a paid Apple Developer ID, so the first launch needs one
+    # extra click. Spell that out inside the disk image where people will actually see it.
+    cat > "$STAGE/How to open BoltZip.txt" <<'TXT'
+Opening BoltZip for the first time
+==================================
+
+1. Drag BoltZip to the Applications folder.
+2. In Applications, RIGHT-CLICK (or Control-click) BoltZip and choose "Open".
+3. Click "Open" in the dialog that appears.
+
+You only need to do this once. Afterwards BoltZip opens normally.
+
+Why is this necessary?
+BoltZip is free and open source and is not signed with a paid Apple Developer ID,
+so macOS asks you to confirm the first launch. Double-clicking the app the first
+time shows a warning instead of opening it, which is why the right-click matters.
+
+Still blocked?
+Open System Settings > Privacy & Security, scroll down, and click "Open Anyway".
+Or run this in Terminal:
+
+    xattr -dr com.apple.quarantine /Applications/BoltZip.app
+
+Source code and checksums: https://github.com/bsantacruzms/Bzip/releases
+TXT
+
+    # macOS refuses to launch a bundle whose signature is missing or invalid and reports
+    # "BoltZip is damaged and can't be opened", which is fatal on Apple silicon. Publishing
+    # and then editing the bundle (adding the icon, Info.plist and the bz binary) invalidates
+    # whatever signature dotnet applied, so sign the finished bundle here, last.
+    #
+    # This is an ad-hoc signature ("-"), which makes the app runnable everywhere. It is not a
+    # Developer ID signature, so Gatekeeper still asks the user to confirm the first launch
+    # (right-click, then Open). Removing that prompt entirely requires a paid Apple Developer
+    # account to sign with a Developer ID and notarize.
+    codesign --force --deep --sign - "$APP"
+    codesign --verify --deep --strict "$APP"
+    echo "==> Signed (ad-hoc) $APP"
 
     DMG="dist/BoltZip-$VERSION-$ARCH.dmg"
     rm -f "$DMG"
