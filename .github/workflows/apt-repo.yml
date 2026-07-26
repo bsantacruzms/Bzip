@@ -8,15 +8,12 @@ name: APT repository
 # it skips cleanly and never blocks a release.
 #
 # One-time setup (see README, "Install on Linux"):
-#   1. Create a public repo to host the files, e.g. bsantacruzms/boltzip-apt, and enable
-#      GitHub Pages on its main branch.
-#   2. Create a signing key:  gpg --quick-generate-key "BoltZip <you@example.com>" default default never
-#   3. Add these secrets to THIS repo:
-#        APT_GPG_PRIVATE_KEY  gpg --armor --export-secret-keys <KEYID>
-#        APT_GPG_KEY_ID       the key id
-#        APT_GPG_PASSPHRASE   only if the key has one
-#        APT_REPO_TOKEN       a PAT with 'contents: write' on the hosting repo
-#   4. Optionally set the variables APT_REPO_SLUG and APT_REPO_URL.
+#   1. A public repo hosts the files, e.g. bsantacruzms/boltzip-apt, with GitHub Pages enabled.
+#   2. A GPG key signs the repository metadata (apt rejects unsigned repos by default).
+#   3. A write-enabled deploy key on the hosting repo lets this workflow publish to it. A deploy
+#      key is scoped to that single repo, so it is safer than a personal access token.
+#   4. Secrets on THIS repo: APT_GPG_PRIVATE_KEY, APT_GPG_KEY_ID, APT_DEPLOY_KEY
+#      (optionally APT_GPG_PASSPHRASE), plus the variables APT_REPO_SLUG and APT_REPO_URL.
 
 on:
   release:
@@ -33,10 +30,10 @@ jobs:
         id: cfg
         env:
           KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
-          TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+          DEPLOY: ${{ secrets.APT_DEPLOY_KEY }}
         run: |
-          if [ -z "$KEY" ] || [ -z "$TOKEN" ]; then
-            echo "APT publishing is not configured yet (missing signing key or token); skipping."
+          if [ -z "$KEY" ] || [ -z "$DEPLOY" ]; then
+            echo "APT publishing is not configured yet (missing signing key or deploy key); skipping."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"
@@ -64,7 +61,7 @@ jobs:
           APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
         run: |
           printf '%s' "$APT_GPG_PRIVATE_KEY" | gpg --batch --import
-          gpg --list-secret-keys
+          gpg --list-secret-keys --keyid-format LONG
 
       - name: Build the APT repository
         if: steps.cfg.outputs.ready == 'true'
@@ -77,9 +74,14 @@ jobs:
       - name: Publish
         if: steps.cfg.outputs.ready == 'true'
         env:
-          APT_REPO_TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+          APT_DEPLOY_KEY: ${{ secrets.APT_DEPLOY_KEY }}
           SLUG: ${{ vars.APT_REPO_SLUG || 'bsantacruzms/boltzip-apt' }}
         run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$APT_DEPLOY_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+
           cd apt-repo
           touch .nojekyll
           git init -q -b main
@@ -89,5 +91,5 @@ jobs:
           git commit -qm "Publish BoltZip APT repository"
           # The hosting repo holds generated content only, so a single fresh commit keeps it
           # small instead of accumulating every release's packages in its history.
-          git push --force "https://x-access-token:${APT_REPO_TOKEN}@github.com/${SLUG}.git" main
+          git push --force "git@github.com:${SLUG}.git" main
           echo "Published to https://github.com/${SLUG}"
