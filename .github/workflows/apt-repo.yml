@@ -1,0 +1,93 @@
+name: APT repository
+
+# Publishes a signed APT repository so Linux users can install with:
+#   sudo apt install boltzip
+#
+# This is a third-party repository, the same model Docker, Microsoft and Ookla's speedtest
+# use. It is intentionally decoupled from the release workflow: if it is not configured yet,
+# it skips cleanly and never blocks a release.
+#
+# One-time setup (see README, "Install on Linux"):
+#   1. Create a public repo to host the files, e.g. bsantacruzms/boltzip-apt, and enable
+#      GitHub Pages on its main branch.
+#   2. Create a signing key:  gpg --quick-generate-key "BoltZip <you@example.com>" default default never
+#   3. Add these secrets to THIS repo:
+#        APT_GPG_PRIVATE_KEY  gpg --armor --export-secret-keys <KEYID>
+#        APT_GPG_KEY_ID       the key id
+#        APT_GPG_PASSPHRASE   only if the key has one
+#        APT_REPO_TOKEN       a PAT with 'contents: write' on the hosting repo
+#   4. Optionally set the variables APT_REPO_SLUG and APT_REPO_URL.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check configuration
+        id: cfg
+        env:
+          KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+          TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+        run: |
+          if [ -z "$KEY" ] || [ -z "$TOKEN" ]; then
+            echo "APT publishing is not configured yet (missing signing key or token); skipping."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install tools
+        if: steps.cfg.outputs.ready == 'true'
+        run: sudo apt-get update && sudo apt-get install -y apt-utils
+
+      - name: Download .deb packages from the latest release
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p debs
+          tag="${{ github.event.release.tag_name }}"
+          if [ -z "$tag" ]; then tag="$(gh release view --json tagName -q .tagName)"; fi
+          echo "Collecting .deb assets from $tag"
+          gh release download "$tag" --pattern '*.deb' --dir debs
+          ls -lh debs
+
+      - name: Import signing key
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          APT_GPG_PRIVATE_KEY: ${{ secrets.APT_GPG_PRIVATE_KEY }}
+        run: |
+          printf '%s' "$APT_GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --list-secret-keys
+
+      - name: Build the APT repository
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          GPG_KEY_ID: ${{ secrets.APT_GPG_KEY_ID }}
+          GPG_PASSPHRASE: ${{ secrets.APT_GPG_PASSPHRASE }}
+          REPO_URL: ${{ vars.APT_REPO_URL || 'https://bsantacruzms.github.io/boltzip-apt' }}
+        run: bash scripts/build-apt-repo.sh --debs debs --out apt-repo --url "$REPO_URL"
+
+      - name: Publish
+        if: steps.cfg.outputs.ready == 'true'
+        env:
+          APT_REPO_TOKEN: ${{ secrets.APT_REPO_TOKEN }}
+          SLUG: ${{ vars.APT_REPO_SLUG || 'bsantacruzms/boltzip-apt' }}
+        run: |
+          cd apt-repo
+          touch .nojekyll
+          git init -q -b main
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Publish BoltZip APT repository"
+          # The hosting repo holds generated content only, so a single fresh commit keeps it
+          # small instead of accumulating every release's packages in its history.
+          git push --force "https://x-access-token:${APT_REPO_TOKEN}@github.com/${SLUG}.git" main
+          echo "Published to https://github.com/${SLUG}"

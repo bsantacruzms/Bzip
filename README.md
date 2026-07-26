@@ -125,7 +125,16 @@ which changes quality; BoltZip keeps files bit-for-bit identical.
 **macOS**, `BoltZip-<version>-<arch>.dmg` (drag to Applications). The app declares the archive types
 it can open, so they list BoltZip under **Finder → Open With** (pick *Change All…* to make it the default).
 
-**Linux**, install the package for your distro, or use the portable tarball:
+**Linux**, one command installs the right package for your system:
+
+```bash
+curl -fsSL https://bsantacruzms.github.io/Bzip/install.sh | sh
+```
+
+It picks the `.deb`, `.rpm` or portable tarball automatically. (Review it first if you prefer:
+`curl -fsSL https://bsantacruzms.github.io/Bzip/install.sh | less`.)
+
+Or install a package by hand, or use the portable tarball:
 
 ```bash
 # Debian / Ubuntu
@@ -135,6 +144,11 @@ sudo dnf install ./boltzip-<version>-1.x86_64.rpm
 # Portable (any distro): extract, then link the file types
 tar xzf BoltZip-<version>-linux-x64.tar.gz && cd BoltZip-<version>-linux-x64 && ./install.sh
 ```
+
+<sub>BoltZip is not (yet) in Debian's or Ubuntu's own archives, so plain `apt install boltzip`
+only works after adding the BoltZip repository. Getting into the official archives requires a
+Debian maintainer sponsor and packaging built from source against the distro's .NET runtime,
+rather than the self-contained binaries released here.</sub>
 
 The `.deb`/`.rpm` register the `.bz` MIME type and add BoltZip to the file manager’s “Open with”.
 Right‑click menus and file associations are added by the installers only; the portable builds never
