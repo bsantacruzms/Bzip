@@ -59,7 +59,9 @@ public partial class MainWindow : Window
     {
         try
         {
-            _hardware = await HardwareProbe.DetectAsync();
+            // Installed builds profile the machine once and cache it; portable builds re-probe.
+            _hardware = await HardwareProfileStore.GetProfileAsync(
+                useCache: BoltZip.Core.Infrastructure.DeploymentMode.IsInstalled());
         }
         catch
         {

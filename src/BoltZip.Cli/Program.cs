@@ -63,6 +63,8 @@ internal static class Program
             Inputs = inputs,
             Password = password,
             Goal = goal,
+            // Installed builds reuse a cached hardware profile; portable re-probes each run.
+            Hardware = await HardwareProfileStore.GetProfileAsync(DeploymentMode.IsInstalled()),
         };
 
         if (!quiet)
@@ -175,7 +177,7 @@ internal static class Program
 
     private static async Task<int> ShowHardwareAsync()
     {
-        var profile = await HardwareProbe.DetectAsync();
+        var profile = await HardwareProfileStore.GetProfileAsync(DeploymentMode.IsInstalled());
         Console.WriteLine("Hardware profile");
         Console.WriteLine($"  {profile.Summary()}");
         Console.WriteLine($"  Architecture:  {profile.Architecture}");
@@ -445,7 +447,7 @@ internal static class Program
 
     private static int PrintVersion()
     {
-        Console.WriteLine("BoltZip (bz) 1.0.0");
+        Console.WriteLine("BoltZip (bz) 1.0.1");
         return 0;
     }
 
