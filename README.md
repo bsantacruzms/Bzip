@@ -184,12 +184,16 @@ touch your system unless you run `install.sh`.
 ```text
 bz create <output> <input...> [--goal fast|balanced|max] [-p [password]] [-q]
 bz extract <archive> [--out <dir>] [-y] [-p [password]] [-q]
-bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--cpu]
+bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--container auto|mkv|mp4] [--cpu]
 bz list <archive> [-p [password]]
 bz detect <file>
 bz hw                       # show your hardware and the plan it would use
 bz install-context / uninstall-context
 ```
+
+Video container selection defaults to `auto`: BoltZip inspects the source streams and uses MP4 for
+simple compatible videos, or MKV when needed to preserve lossless audio, subtitles, multiple audio
+tracks, or chapters. Use `--container` to override that choice.
 
 ```powershell
 # Encrypted native archive, auto‑tuned to this machine

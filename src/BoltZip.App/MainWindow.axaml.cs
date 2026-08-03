@@ -537,10 +537,32 @@ public partial class MainWindow : Window
         {
             foreach (var video in videos)
             {
-                var output = VideoCompressor.DefaultOutputPath(video, outputDir);
+                var sourceInfo = await compressor.InspectAsync(video);
+                var selectedContainer = VideoCompressor.ChooseContainer(sourceInfo, SelectedVideoContainer());
+                if (selectedContainer == VideoContainer.Mp4 && VideoCompressor.Mp4CompatibilityProblem(sourceInfo) is { } problem)
+                {
+                    lines.Add($"{Path.GetFileName(video)}: failed - cannot use MP4 because {problem}. Choose MKV or Auto.");
+                    VideoResultText.Text = string.Join(Environment.NewLine, lines);
+                    continue;
+                }
+
+                var output = VideoCompressor.DefaultOutputPath(video, outputDir, sourceInfo, selectedContainer);
+                output = VideoCompressor.NonCollidingOutputPath(output);
                 try
                 {
-                    var result = await compressor.CompressAsync(video, output, plan, CreateVideoProgress());
+                    foreach (var warning in VideoCompressor.PreservationWarnings(sourceInfo))
+                    {
+                        lines.Add($"{Path.GetFileName(video)}: warning - {warning}");
+                    }
+
+                    var pixelFormatWarning = VideoCompressor.PixelFormatWarning(sourceInfo, plan.Primary);
+                    if (pixelFormatWarning is not null)
+                    {
+                        lines.Add($"{Path.GetFileName(video)}: warning - {pixelFormatWarning}");
+                    }
+
+                    var result = await compressor.CompressAsync(
+                        video, output, plan, sourceInfo, CreateVideoProgress(), overwriteOutput: false);
                     totalIn += result.InputBytes;
                     totalOut += result.OutputBytes;
                     done++;
@@ -605,6 +627,12 @@ public partial class MainWindow : Window
     {
         var tag = VideoCodecPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag as string;
         return Enum.TryParse<VideoCodec>(tag, out var codec) ? codec : VideoCodec.Auto;
+    }
+
+    private VideoContainer SelectedVideoContainer()
+    {
+        var tag = VideoContainerPanel.Children.OfType<RadioButton>().FirstOrDefault(r => r.IsChecked == true)?.Tag as string;
+        return Enum.TryParse<VideoContainer>(tag, out var container) ? container : VideoContainer.Auto;
     }
 
     private void OnOpenWebsite(object? sender, PointerPressedEventArgs e)

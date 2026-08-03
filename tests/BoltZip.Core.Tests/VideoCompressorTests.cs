@@ -155,9 +155,44 @@ public class VideoCompressorTests
         Assert.Equal("copy", ValueAfter(args, "-c:a"));
         Assert.Equal("hevc_nvenc", ValueAfter(args, "-c:v"));
         Assert.Contains("hvc1", args);
-        Assert.Contains("+faststart", args);
+        Assert.Contains("+faststart+write_colr", args);
         Assert.Equal("out.mp4", args[^1]);
         Assert.Contains("0:v:0", args);
+        Assert.Contains("0:s?", args);
+        Assert.Equal("0", ValueAfter(args, "-map_chapters"));
+    }
+
+    [Fact]
+    public void BuildArguments_HdrSource_PreservesColorTags()
+    {
+        var encoder = new VideoEncoder("hevc_nvenc", "NVIDIA HEVC (NVENC)", VideoCodec.Hevc, true, GpuVendor.Nvidia);
+        var source = Source(
+            pixelFormat: "yuv420p10le", colorPrimaries: "bt2020",
+            colorTransfer: "smpte2084", colorSpace: "bt2020nc");
+        var args = VideoCompressor.BuildArguments("in.mkv", "out.mkv", encoder, VideoQuality.Balanced, source);
+
+        Assert.Equal("p010le", ValueAfter(args, "-pix_fmt"));
+        Assert.Equal("0:0", ValueAfter(args, "-map"));
+        Assert.Equal("bt2020", ValueAfter(args, "-color_primaries"));
+        Assert.Equal("smpte2084", ValueAfter(args, "-color_trc"));
+        Assert.Equal("bt2020nc", ValueAfter(args, "-colorspace"));
+        Assert.Equal(
+            "hevc_metadata=colour_primaries=9:transfer_characteristics=16:matrix_coefficients=9",
+            ValueAfter(args, "-bsf:v"));
+    }
+
+    [Fact]
+    public void BuildArguments_Av1HdrSource_InjectsColorMetadata()
+    {
+        var encoder = new VideoEncoder("libsvtav1", "AV1 (SVT-AV1, CPU)", VideoCodec.Av1, false, GpuVendor.Unknown);
+        var source = Source(
+            pixelFormat: "yuv420p10le", colorPrimaries: "bt2020",
+            colorTransfer: "smpte2084", colorSpace: "bt2020nc");
+        var args = VideoCompressor.BuildArguments("in.mkv", "out.mkv", encoder, VideoQuality.VisuallyLossless, source);
+
+        Assert.Equal(
+            "av1_metadata=color_primaries=9:transfer_characteristics=16:matrix_coefficients=9",
+            ValueAfter(args, "-bsf:v"));
     }
 
     [Fact]
@@ -166,18 +201,103 @@ public class VideoCompressorTests
         var encoder = new VideoEncoder("hevc_nvenc", "NVIDIA HEVC (NVENC)", VideoCodec.Hevc, true, GpuVendor.Nvidia);
         var args = VideoCompressor.BuildArguments("in.mp4", "out.mkv", encoder, VideoQuality.Balanced);
         Assert.DoesNotContain("+faststart", args);
+        Assert.Contains("0:t?", args);
     }
 
     [Fact]
-    public void DefaultOutputPath_ChoosesMp4_AndAvoidsOverwritingInput()
+    public void BuildArguments_Mkv_ConvertsMp4NativeSubtitleToSrt()
     {
-        var fromMkv = VideoCompressor.DefaultOutputPath("/videos/clip.mkv", null);
+        var encoder = new VideoEncoder("hevc_nvenc", "NVIDIA HEVC (NVENC)", VideoCodec.Hevc, true, GpuVendor.Nvidia);
+        var args = VideoCompressor.BuildArguments(
+            "in.mp4", "out.mkv", encoder, VideoQuality.Balanced,
+            Source(subtitles: new[] { "mov_text", "subrip" }));
+
+        Assert.Equal("srt", ValueAfter(args, "-c:s:0"));
+        Assert.DoesNotContain("-c:s:1", args);
+    }
+
+    [Fact]
+    public void ChooseContainer_Auto_UsesStreamsRatherThanInputExtension()
+    {
+        var simpleMkv = Source(audio: new[] { new VideoAudioStream("aac", "LC") });
+        var trueHdMkv = Source(audio: new[] { new VideoAudioStream("truehd", null) });
+        var pgsMkv = Source(audio: new[] { new VideoAudioStream("aac", "LC") }, subtitles: new[] { "hdmv_pgs_subtitle" });
+        var wmaMkv = Source(audio: new[] { new VideoAudioStream("wmav2", null) });
+
+        Assert.Equal(VideoContainer.Mp4, VideoCompressor.ChooseContainer(simpleMkv));
+        Assert.Equal(VideoContainer.Mkv, VideoCompressor.ChooseContainer(trueHdMkv));
+        Assert.Equal(VideoContainer.Mkv, VideoCompressor.ChooseContainer(pgsMkv));
+        Assert.Equal(VideoContainer.Mkv, VideoCompressor.ChooseContainer(wmaMkv));
+        Assert.Contains("wmav2", VideoCompressor.Mp4CompatibilityProblem(wmaMkv));
+    }
+
+    [Fact]
+    public void ChooseContainer_Auto_PreservesRichMediaFeatures()
+    {
+        var dtsHd = Source(audio: new[] { new VideoAudioStream("dts", "DTS-HD MA") });
+        var multipleAudio = Source(audio: new[]
+        {
+            new VideoAudioStream("aac", "LC"),
+            new VideoAudioStream("ac3", null),
+        });
+        var chapters = Source(audio: new[] { new VideoAudioStream("aac", "LC") }, chapters: 12);
+
+        Assert.Equal(VideoContainer.Mkv, VideoCompressor.ChooseContainer(dtsHd));
+        Assert.Equal(VideoContainer.Mkv, VideoCompressor.ChooseContainer(multipleAudio));
+        Assert.Equal(VideoContainer.Mkv, VideoCompressor.ChooseContainer(chapters));
+        Assert.Equal(VideoContainer.Mp4, VideoCompressor.ChooseContainer(dtsHd, VideoContainer.Mp4));
+    }
+
+    [Fact]
+    public void PixelFormatWarning_FlagsTenBitH264_ButNotTenBitHevc()
+    {
+        var source = Source(pixelFormat: "yuv420p10le");
+        var h264 = new VideoEncoder("h264_nvenc", "NVIDIA H.264", VideoCodec.H264, true, GpuVendor.Nvidia);
+        var hevc = new VideoEncoder("hevc_nvenc", "NVIDIA HEVC", VideoCodec.Hevc, true, GpuVendor.Nvidia);
+
+        Assert.NotNull(VideoCompressor.PixelFormatWarning(source, h264));
+        Assert.Null(VideoCompressor.PixelFormatWarning(source, hevc));
+    }
+
+    [Fact]
+    public void PreservationWarnings_DescribeHdrAndSecondaryVideoLimits()
+    {
+        var source = Source(videoStreams: 2, dolbyVision: true, masteringDisplay: true, contentLight: true);
+        var warnings = VideoCompressor.PreservationWarnings(source);
+
+        Assert.Contains(warnings, warning => warning.Contains("2 video streams", StringComparison.Ordinal));
+        Assert.Contains(warnings, warning => warning.Contains("Dolby Vision RPU", StringComparison.Ordinal));
+        Assert.Contains(warnings, warning => warning.Contains("MaxCLL/MaxFALL", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void DefaultOutputPath_UsesChosenContainer_AndAvoidsOverwritingInput()
+    {
+        var simple = Source(audio: new[] { new VideoAudioStream("aac", "LC") });
+        var fromMkv = VideoCompressor.DefaultOutputPath("/videos/clip.mkv", null, simple);
         Assert.EndsWith("clip.mp4", fromMkv.Replace('\\', '/'));
 
-        // Input already .mp4 in place → must not collide with the source.
-        var fromMp4 = VideoCompressor.DefaultOutputPath("/videos/clip.mp4", null);
-        Assert.EndsWith("clip-boltzip.mp4", fromMp4.Replace('\\', '/'));
+        var fromMkvWithPgs = VideoCompressor.DefaultOutputPath(
+            "/videos/clip.mkv", null, Source(subtitles: new[] { "hdmv_pgs_subtitle" }));
+        Assert.EndsWith("clip-boltzip.mkv", fromMkvWithPgs.Replace('\\', '/'));
     }
+
+    private static VideoSourceInfo Source(
+        IReadOnlyList<VideoAudioStream>? audio = null,
+        IReadOnlyList<string>? subtitles = null,
+        int chapters = 0,
+        int attachments = 0,
+        string? pixelFormat = "yuv420p",
+        string? colorPrimaries = null,
+        string? colorTransfer = null,
+        string? colorSpace = null,
+        int videoStreams = 1,
+        bool dolbyVision = false,
+        bool masteringDisplay = false,
+        bool contentLight = false,
+        int dataStreams = 0) =>
+        new(true, 120, "h264", 0, videoStreams, audio ?? Array.Empty<VideoAudioStream>(), subtitles ?? Array.Empty<string>(), dataStreams, attachments, chapters,
+            pixelFormat, colorPrimaries, colorTransfer, colorSpace, dolbyVision, masteringDisplay, contentLight);
 
     [Theory]
     [InlineData("movie.mp4", true)]

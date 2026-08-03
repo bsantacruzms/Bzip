@@ -31,6 +31,47 @@ public enum VideoCodec
     H264,
 }
 
+/// <summary>The output container used for a compressed video.</summary>
+public enum VideoContainer
+{
+    /// <summary>Choose MP4 when every preserved stream is compatible; otherwise choose Matroska.</summary>
+    Auto,
+
+    /// <summary>MP4, for broad playback compatibility with simple video files.</summary>
+    Mp4,
+
+    /// <summary>Matroska, for lossless audio, subtitles, chapters and other rich media streams.</summary>
+    Mkv,
+}
+
+/// <summary>A source audio stream as reported by FFprobe.</summary>
+public sealed record VideoAudioStream(string Codec, string? Profile);
+
+/// <summary>Container-relevant properties discovered by inspecting a source video.</summary>
+public sealed record VideoSourceInfo(
+    bool InspectionSucceeded,
+    double? DurationSeconds,
+    string? VideoCodec,
+    int? PrimaryVideoStreamIndex,
+    int VideoStreamCount,
+    IReadOnlyList<VideoAudioStream> AudioStreams,
+    IReadOnlyList<string> SubtitleCodecs,
+    int DataStreamCount,
+    int AttachmentCount,
+    int ChapterCount,
+    string? PixelFormat,
+    string? ColorPrimaries,
+    string? ColorTransfer,
+    string? ColorSpace,
+    bool HasDolbyVision,
+    bool HasMasteringDisplayMetadata,
+    bool HasContentLightMetadata)
+{
+    public static VideoSourceInfo Unknown { get; } = new(
+        false, null, null, null, 0, Array.Empty<VideoAudioStream>(), Array.Empty<string>(), 0, 0, 0,
+        null, null, null, null, false, false, false);
+}
+
 /// <summary>A concrete encoder choice (an FFmpeg encoder name plus how to describe it).</summary>
 public sealed record VideoEncoder(
     string FfmpegName,

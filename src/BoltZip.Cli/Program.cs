@@ -130,7 +130,7 @@ internal static class Program
         if (positionals.Count < 1)
         {
             Console.Error.WriteLine(
-                "Usage: bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--cpu] [-y] [-q]");
+                "Usage: bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--container auto|mkv|mp4] [--cpu] [-y] [-q]");
             return 2;
         }
 
@@ -145,6 +145,7 @@ internal static class Program
         var outputDir = options.TryGetValue("out", out var o) && o is not null ? o : null;
         var quality = ParseVideoQuality(options);
         var codec = ParseVideoCodec(options);
+        var container = ParseVideoContainer(options);
         var forceCpu = options.ContainsKey("cpu");
         var overwrite = options.ContainsKey("overwrite");
         var quiet = options.ContainsKey("quiet");
@@ -185,7 +186,15 @@ internal static class Program
         var done = 0;
         foreach (var video in videos)
         {
-            var output = VideoCompressor.DefaultOutputPath(video, outputDir);
+            var sourceInfo = await compressor.InspectAsync(video);
+            var selectedContainer = VideoCompressor.ChooseContainer(sourceInfo, container);
+            if (selectedContainer == VideoContainer.Mp4 && VideoCompressor.Mp4CompatibilityProblem(sourceInfo) is { } problem)
+            {
+                Console.Error.WriteLine($"Failed: {Path.GetFileName(video)}: cannot use MP4 because {problem}. Use --container mkv.");
+                continue;
+            }
+
+            var output = VideoCompressor.DefaultOutputPath(video, outputDir, sourceInfo, selectedContainer);
             if (!overwrite && File.Exists(output))
             {
                 Console.WriteLine($"Skip {Path.GetFileName(video)} (output exists; use -y to overwrite)");
@@ -194,7 +203,19 @@ internal static class Program
 
             try
             {
-                var result = await compressor.CompressAsync(video, output, plan, MakeVideoProgress(quiet));
+                foreach (var warning in VideoCompressor.PreservationWarnings(sourceInfo))
+                {
+                    Console.Error.WriteLine($"Warning: {Path.GetFileName(video)}: {warning}");
+                }
+
+                var pixelFormatWarning = VideoCompressor.PixelFormatWarning(sourceInfo, plan.Primary);
+                if (pixelFormatWarning is not null)
+                {
+                    Console.Error.WriteLine($"Warning: {Path.GetFileName(video)}: {pixelFormatWarning}");
+                }
+
+                var result = await compressor.CompressAsync(
+                    video, output, plan, sourceInfo, MakeVideoProgress(quiet), overwriteOutput: overwrite);
                 FinishProgressLine(quiet);
                 totalIn += result.InputBytes;
                 totalOut += result.OutputBytes;
@@ -250,6 +271,21 @@ internal static class Program
             "av1" => VideoCodec.Av1,
             "h264" or "avc" or "x264" => VideoCodec.H264,
             _ => VideoCodec.Auto,
+        };
+    }
+
+    private static VideoContainer ParseVideoContainer(Dictionary<string, string?> options)
+    {
+        if (!options.TryGetValue("container", out var value) || value is null)
+        {
+            return VideoContainer.Auto;
+        }
+
+        return value.ToLowerInvariant() switch
+        {
+            "mp4" => VideoContainer.Mp4,
+            "mkv" or "matroska" => VideoContainer.Mkv,
+            _ => VideoContainer.Auto,
         };
     }
 
@@ -548,6 +584,7 @@ internal static class Program
                 case "app":
                 case "quality":
                 case "codec":
+                case "container":
                     if (i + 1 < list.Count)
                     {
                         options[name] = list[++i];
@@ -614,7 +651,7 @@ internal static class Program
             Usage:
               bz create <output> <input...> [--goal fast|balanced|max] [-p [password]] [-q]
               bz extract <archive> [--out <dir>] [-y] [-p [password]] [-q]
-              bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--cpu] [-y] [-q]
+              bz video <file-or-folder> [--out <dir>] [--quality visually-lossless|balanced|smaller] [--codec auto|h265|av1|h264] [--container auto|mkv|mp4] [--cpu] [-y] [-q]
               bz list <archive> [-p [password]]
               bz detect <file>
               bz hw

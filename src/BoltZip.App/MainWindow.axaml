@@ -148,6 +148,12 @@
                                         <RadioButton GroupName="VideoCodec" Content="AV1" Tag="Av1" Margin="0,0,8,8" />
                                         <RadioButton GroupName="VideoCodec" Content="H.264" Tag="H264" Margin="0,0,8,8" />
                                     </WrapPanel>
+                                    <TextBlock Classes="label" Text="Container" />
+                                    <WrapPanel x:Name="VideoContainerPanel">
+                                        <RadioButton GroupName="VideoContainer" Content="Auto" Tag="Auto" IsChecked="True" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="VideoContainer" Content="MKV" Tag="Mkv" Margin="0,0,8,8" />
+                                        <RadioButton GroupName="VideoContainer" Content="MP4" Tag="Mp4" Margin="0,0,8,8" />
+                                    </WrapPanel>
                                     <Grid ColumnDefinitions="90,*,Auto" Margin="0,6,0,0">
                                         <TextBlock Text="Save to" VerticalAlignment="Center" />
                                         <TextBox x:Name="VideoOutputBox" Grid.Column="1" Watermark="Optional, defaults next to the source" />
