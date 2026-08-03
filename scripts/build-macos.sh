@@ -5,7 +5,7 @@
 #
 set -euo pipefail
 
-VERSION="1.1.4"
+VERSION="1.1.5"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 mkdir -p dist

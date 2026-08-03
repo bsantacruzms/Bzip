@@ -638,7 +638,7 @@ internal static class Program
 
     private static int PrintVersion()
     {
-        Console.WriteLine("BoltZip (bz) 1.1.4");
+        Console.WriteLine("BoltZip (bz) 1.1.5");
         return 0;
     }
 

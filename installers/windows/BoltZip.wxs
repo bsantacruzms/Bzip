@@ -9,7 +9,7 @@
      xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
   <Package Name="BoltZip"
            Manufacturer="BoltZip"
-           Version="1.1.4.0"
+           Version="1.1.5.0"
            UpgradeCode="7C2B9A64-4E3D-4C1B-9E7A-2B1F0C0D0E01"
            Scope="perMachine">
 
@@ -48,7 +48,7 @@
     <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
       <Component Id="GuiExe">
         <File Id="BoltZipToolExe"
-              Source="$(sys.SOURCEFILEDIR)..\..\dist\BoltZipTool-1.1.4-portable.exe"
+              Source="$(sys.SOURCEFILEDIR)..\..\dist\BoltZipTool-1.1.5-portable.exe"
               Name="BoltZipTool.exe"
               KeyPath="yes">
           <Shortcut Id="StartMenuShortcut"
@@ -62,7 +62,7 @@
 
       <Component Id="CliExe">
         <File Id="BzExe"
-              Source="$(sys.SOURCEFILEDIR)..\..\dist\bz-1.1.4-portable.exe"
+              Source="$(sys.SOURCEFILEDIR)..\..\dist\bz-1.1.5-portable.exe"
               Name="bz.exe"
               KeyPath="yes" />
         <Environment Id="PathEnv" Name="PATH" Value="[INSTALLFOLDER]" Part="last" Action="set" System="yes" Permanent="no" />
