@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using System.Text;
 using BoltZip.Core.Compression;
 using BoltZip.Core.Hardware;
@@ -170,6 +171,13 @@ internal static class Program
         var hardware = await HardwareProfileStore.GetProfileAsync(DeploymentMode.IsInstalled());
         var plan = VideoCompressor.PlanEncode(hardware, codec, quality, forceCpu);
 
+        // Claim the signal instead of letting the runtime tear us down, so the running ffmpeg is
+        // killed and its partial .tmp file removed before we exit. Registered only for this command;
+        // the others spawn no children and keep the default disposition.
+        using var cancellation = new CancellationTokenSource();
+        using var onInterrupt = HandleSignal(PosixSignal.SIGINT, cancellation);
+        using var onTerminate = HandleSignal(PosixSignal.SIGTERM, cancellation);
+
         if (!quiet)
         {
             Console.WriteLine($"Encoder: {plan.Primary.DisplayName}");
@@ -184,9 +192,16 @@ internal static class Program
         var compressor = new VideoCompressor(ffmpeg);
         long totalIn = 0, totalOut = 0;
         var done = 0;
+        var cancelled = false;
         foreach (var video in videos)
         {
-            var sourceInfo = await compressor.InspectAsync(video);
+            if (cancellation.IsCancellationRequested)
+            {
+                cancelled = true;
+                break;
+            }
+
+            var sourceInfo = await compressor.InspectAsync(video, cancellation.Token);
             var selectedContainer = VideoCompressor.ChooseContainer(sourceInfo, container);
             if (selectedContainer == VideoContainer.Mp4 && VideoCompressor.Mp4CompatibilityProblem(sourceInfo) is { } problem)
             {
@@ -215,7 +230,7 @@ internal static class Program
                 }
 
                 var result = await compressor.CompressAsync(
-                    video, output, plan, sourceInfo, MakeVideoProgress(quiet), overwriteOutput: overwrite);
+                    video, output, plan, sourceInfo, MakeVideoProgress(quiet), cancellation.Token, overwrite);
                 FinishProgressLine(quiet);
                 totalIn += result.InputBytes;
                 totalOut += result.OutputBytes;
@@ -224,6 +239,13 @@ internal static class Program
                 Console.WriteLine(
                     $"{Path.GetFileName(video)}  {FormatBytes(result.InputBytes)} -> {FormatBytes(result.OutputBytes)}  " +
                     $"({result.Reduction * 100:0.#}% smaller, {result.Elapsed.TotalSeconds:0.#}s, {enc})");
+            }
+            catch (OperationCanceledException)
+            {
+                FinishProgressLine(quiet);
+                Console.Error.WriteLine($"Cancelled: {Path.GetFileName(video)}");
+                cancelled = true;
+                break;
             }
             catch (Exception ex)
             {
@@ -240,8 +262,20 @@ internal static class Program
             Console.WriteLine($"Shrunk {done} of {videos.Count} video(s): {FormatBytes(totalIn)} -> {FormatBytes(totalOut)} ({pct:0.#}% smaller, {FormatBytes(saved)} saved).");
         }
 
+        if (cancelled)
+        {
+            return 130;
+        }
+
         return done > 0 ? 0 : 1;
     }
+
+    private static PosixSignalRegistration HandleSignal(PosixSignal signal, CancellationTokenSource cancellation) =>
+        PosixSignalRegistration.Create(signal, context =>
+        {
+            context.Cancel = true;
+            cancellation.Cancel();
+        });
 
     private static VideoQuality ParseVideoQuality(Dictionary<string, string?> options)
     {

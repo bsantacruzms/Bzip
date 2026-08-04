@@ -314,4 +314,30 @@ public class VideoCompressorTests
     {
         Assert.False(string.IsNullOrWhiteSpace(FfmpegLocator.InstallHint()));
     }
+
+    [Theory]
+    [InlineData(1)]     // ffmpeg's ordinary error exit
+    [InlineData(69)]
+    public void ShouldRetryOnCpu_EncoderFailedToStart_RetriesOnCpu(int exitCode)
+    {
+        Assert.True(VideoCompressor.ShouldRetryOnCpu(exitCode, framesEncoded: 0));
+    }
+
+    [Theory]
+    [InlineData(130)]           // SIGINT
+    [InlineData(137)]           // SIGKILL
+    [InlineData(143)]           // SIGTERM
+    [InlineData(-1073741510)]   // Windows STATUS_CONTROL_C_EXIT
+    public void ShouldRetryOnCpu_KilledBySignal_DoesNotRetry(int exitCode)
+    {
+        Assert.False(VideoCompressor.ShouldRetryOnCpu(exitCode, framesEncoded: 0));
+    }
+
+    [Fact]
+    public void ShouldRetryOnCpu_FailedMidEncode_DoesNotRetry()
+    {
+        // Frames were already produced, so the encoder started fine and this is not
+        // the "hardware encoder unavailable" case the CPU fallback exists for.
+        Assert.False(VideoCompressor.ShouldRetryOnCpu(1, framesEncoded: 4200));
+    }
 }

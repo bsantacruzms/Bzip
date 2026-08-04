@@ -329,6 +329,21 @@ public sealed class VideoCompressor
         return warnings;
     }
 
+    /// <summary>
+    /// Whether a failed hardware encode should be retried with the CPU encoder. The fallback exists
+    /// for an encoder that could not start (no capable device, missing driver, session limit), so an
+    /// ffmpeg that was killed, or that had already encoded frames, must surface the failure instead
+    /// of silently starting a second and far slower encode.
+    /// </summary>
+    public static bool ShouldRetryOnCpu(int exitCode, long framesEncoded) =>
+        framesEncoded == 0 && !WasKilled(exitCode);
+
+    /// <summary>
+    /// A process killed by a signal exits 128+N (130 SIGINT, 137 SIGKILL, 143 SIGTERM). Windows
+    /// reports a terminated process with a negative, NTSTATUS-shaped code.
+    /// </summary>
+    private static bool WasKilled(int exitCode) => exitCode < 0 || exitCode is >= 129 and <= 192;
+
     /// <summary>The rate-control flags (quality target) for a given FFmpeg encoder.</summary>
     public static IReadOnlyList<string> RateControlArgs(string encoder, VideoQuality quality)
     {
@@ -685,14 +700,15 @@ public sealed class VideoCompressor
             encoder = plan.CpuFallback;
         }
 
-        var (exitCode, stderr) = await RunEncodeAsync(input, temporaryOutput, encoder, plan.Quality, sourceInfo, durationSec, progress, cancellationToken);
+        var (exitCode, stderr, framesEncoded) = await RunEncodeAsync(input, temporaryOutput, encoder, plan.Quality, sourceInfo, durationSec, progress, cancellationToken);
         if (exitCode != 0 && encoder.IsHardware && plan.CpuFallback.FfmpegName != encoder.FfmpegName &&
-            (availableEncoders is null || availableEncoders.Contains(plan.CpuFallback.FfmpegName)))
+            (availableEncoders is null || availableEncoders.Contains(plan.CpuFallback.FfmpegName)) &&
+            ShouldRetryOnCpu(exitCode, framesEncoded))
         {
             // The GPU encoder failed to initialize (driver/session limits, unsupported input) — fall back.
             usedFallback = true;
             encoder = plan.CpuFallback;
-            (exitCode, stderr) = await RunEncodeAsync(input, temporaryOutput, encoder, plan.Quality, sourceInfo, durationSec, progress, cancellationToken);
+            (exitCode, stderr, _) = await RunEncodeAsync(input, temporaryOutput, encoder, plan.Quality, sourceInfo, durationSec, progress, cancellationToken);
         }
 
         sw.Stop();
@@ -774,7 +790,7 @@ public sealed class VideoCompressor
         }
     }
 
-    private async Task<(int ExitCode, string Stderr)> RunEncodeAsync(
+    private async Task<(int ExitCode, string Stderr, long FramesEncoded)> RunEncodeAsync(
         string input, string output, VideoEncoder encoder, VideoQuality quality,
         VideoSourceInfo sourceInfo, double? durationSec,
         IProgress<VideoProgress>? progress, CancellationToken cancellationToken)
@@ -799,16 +815,28 @@ public sealed class VideoCompressor
         using var proc = new Process { StartInfo = psi };
         proc.Start();
 
+        // Killing the child is what actually unblocks the stdout read by closing its pipes;
+        // relying on a cancelled ReadLineAsync alone would leave ffmpeg running as an orphan.
+        using var killOnCancel = cancellationToken.Register(() => TryKill(proc));
+
         var stderrTask = proc.StandardError.ReadToEndAsync(cancellationToken);
         var name = Path.GetFileName(input);
         var speed = 0d;
+        var frames = 0L;
 
         try
         {
             string? line;
             while ((line = await proc.StandardOutput.ReadLineAsync(cancellationToken)) is not null)
             {
-                if (line.StartsWith("speed=", StringComparison.Ordinal))
+                if (line.StartsWith("frame=", StringComparison.Ordinal))
+                {
+                    if (long.TryParse(line.AsSpan(6), NumberStyles.Integer, CultureInfo.InvariantCulture, out var f) && f > frames)
+                    {
+                        frames = f;
+                    }
+                }
+                else if (line.StartsWith("speed=", StringComparison.Ordinal))
                 {
                     var s = line.Substring(6).TrimEnd('x', ' ');
                     if (double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out var sp))
@@ -832,7 +860,7 @@ public sealed class VideoCompressor
 
             await proc.WaitForExitAsync(cancellationToken);
             var stderr = await stderrTask;
-            return (proc.ExitCode, stderr);
+            return (proc.ExitCode, stderr, frames);
         }
         catch
         {
