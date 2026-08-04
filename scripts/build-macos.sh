@@ -5,9 +5,13 @@
 #
 set -euo pipefail
 
-VERSION="1.1.5"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
+
+# Single source of truth for the version, so the .dmg name always matches the build.
+VERSION="$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' Directory.Build.props | head -n1)"
+[ -n "$VERSION" ] || { echo "error: could not read <Version> from Directory.Build.props" >&2; exit 1; }
+
 mkdir -p dist
 
 make_icns() {

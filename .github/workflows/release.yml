@@ -15,21 +15,39 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: 8.0.x
-      - name: Build portable exes and MSI installer
+      - name: Read version from Directory.Build.props
+        id: ver
         shell: pwsh
         run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $v = ($props.Project.PropertyGroup | Where-Object { $_.Version } | Select-Object -First 1).Version
+          if (-not $v) { throw 'Could not read <Version> from Directory.Build.props' }
+          # The tag names the release, Directory.Build.props names every artifact inside it.
+          # If they disagree, the release ships files that contradict its own tag.
+          $tag = '${{ github.ref_name }}'
+          if ($tag -ne "v$v") { throw "Tag $tag does not match <Version> $v in Directory.Build.props" }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      - name: Build portable exes and MSI installer
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          $v = $env:VERSION
           ./scripts/build-release.ps1
           dotnet tool install --global wix --version 5.0.2
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix extension add -g WixToolset.UI.wixext/5.0.2
-          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -o dist/BoltZip-1.1.5.msi
+          wix build installers/windows/BoltZip.wxs -ext WixToolset.UI.wixext -arch x64 -d "Version=$v" -o "dist/BoltZip-$v.msi"
       - name: Build branded setup.exe (bootstrapper)
         shell: pwsh
         continue-on-error: true
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
         run: |
+          $v = $env:VERSION
           $env:PATH += ";$env:USERPROFILE\.dotnet\tools"
           wix extension add -g WixToolset.BootstrapperApplications.wixext/5.0.2
-          wix build installers/windows/Bundle.wxs -ext WixToolset.BootstrapperApplications.wixext -o dist/BoltZip-1.1.5-setup.exe
+          wix build installers/windows/Bundle.wxs -ext WixToolset.BootstrapperApplications.wixext -d "Version=$v" -o "dist/BoltZip-$v-setup.exe"
       - name: Publish Windows artifacts
         uses: softprops/action-gh-release@v2
         with:

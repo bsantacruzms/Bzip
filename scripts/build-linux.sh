@@ -14,8 +14,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-VERSION="$(grep -oP '(?<=<Version>)[^<]+' Directory.Build.props | head -n1 || true)"
-VERSION="${VERSION:-1.1.5}"
+VERSION="$(sed -n 's/.*<Version>\([^<]*\)<\/Version>.*/\1/p' Directory.Build.props | head -n1)"
+[ -n "$VERSION" ] || { echo "error: could not read <Version> from Directory.Build.props" >&2; exit 1; }
 MAINTAINER="BoltZip"
 URL="https://github.com/bsantacruzms/Bzip"
 DESC="Modern, hardware-optimized archiver with a fast authenticated-encryption format."
